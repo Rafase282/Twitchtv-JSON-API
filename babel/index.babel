@@ -1,0 +1,372 @@
+var App = React.createClass({
+  getInitialState: function() {
+    return {
+      accounts: [
+        'freecodecamp',
+        'storbeck',
+        'terakilobyte',
+        'habathcx',
+        'RobotCaleb',
+        'thomasballinger',
+        'noobs2ninjas',
+        'beohoff',
+        'MedryBW',
+        'brunofin',
+        'comster404',
+        'quill18',
+        'rafase282',
+        'darkness_429',
+        'kairi78_officiel'
+      ],
+      logoURL: 'https://i.imgur.com/vPEp5RQ.png',
+      user: '',
+      channel: '',
+      search: '',
+      streams: '',
+      ingests: '',
+      teams: '',
+      accInfo: {}
+    }
+  },
+  componentWillMount: function() {
+    let accList = JSON.parse(localStorage.getItem('Rafase282_TwitchApp'));
+    if (accList) {
+      this.setState({accounts: accList})
+    }
+  },
+  componentDidUpdate: function(prevProps, prevState) {
+    localStorage.setItem('Rafase282_TwitchApp', JSON.stringify(this.state.accounts));
+  },
+  makeAccountObj: function Account(name, logo, status, url, viewers, game, preview, followers) {
+        this.name = name;
+        this.logo = logo;
+        this.status = status;
+        this.url = url;
+        this.viewers = viewers;
+        this.game = game;
+        this.preview = preview;
+        this.followers = followers;
+      },
+  componentDidMount: function() {
+    this.serverRequest = $.get('https://api.twitch.tv/kraken/', (res) => {
+      let userObj = {};
+      let userURI = res._links.user + 's/';
+      let streamURI = res._links.streams + '/';
+      let logo = this.state.logoURL;
+      let accounts = this.state.accounts;
+      let counter = 1;
+      let counter2 = 0;
+      let length = accounts.length;
+      let tmp = accounts.map(getUserInfo);
+      let states = this;
+      let Account = this.makeAccountObj;
+
+      function getUserInfo(currUser) {
+        $.getJSON(userURI + currUser + '?callback=?', (response) => {
+          if (response.logo === null) {
+            currUser = new Account(response.display_name, logo);
+          } else {
+            currUser = new Account(response.display_name, response.logo);
+          };
+          userObj[currUser.name] = currUser;
+          if (counter === length) {
+            for (let key in userObj) {
+              getStreamInfo(userObj[key]);
+            }
+          } else {
+            counter++;
+          }
+
+        });
+      };
+
+      function getStreamInfo(currStream) {
+        counter2++;
+        $.getJSON(streamURI + currStream.name + '?callback=?', function(feed) {
+          if (feed.status == 422) {
+            currStream.status = 'Account Closed!';
+            setOffline();
+          } else if (feed.stream !== null && feed.stream !== undefined) {
+            currStream.status = feed.stream.channel.status;
+            currStream.url = feed.stream.channel.url;
+            currStream.viewers = feed.stream.viewers;
+            currStream.game = feed.stream.game;
+            currStream.preview = feed.stream.preview.large;
+            currStream.followers = feed.stream.channel.followers;
+          } else {
+            currStream.status = 'Offline!';
+            setOffline();
+          }
+          if (counter2 === length) {
+            states.setState({
+              user: res._links.user,
+              channel: res._links.channel,
+              search: res._links.search,
+              streams: res._links.streams,
+              ingests: res._links.ingest,
+              teams: res._links.teams,
+              accInfo: userObj
+            })
+          }
+
+          function setOffline() {
+            currStream.viewers = 0;
+            currStream.game = 'Offline!';
+            currStream.followers = 'Only Available when online.';
+          }
+        });
+      };
+    });
+  },
+  componentWillUnmount: function() {
+    this.serverRequest.abort();
+  },
+  render() {
+    return <section className='container-fluid'>
+      <Header/>
+      <main className='page-content container'>
+        <Panel accounts={this.state.accounts} userURI={this.state.user} streamURI={this.state.streams} logoURL={this.state.logoURL} users={this.state.accInfo}/>
+        <Menu/>
+      </main>
+      <Footer/>
+    </section>;
+  }
+});
+var Panel = React.createClass({
+  render() {
+    let accounts = this.props.accounts;
+    let userArr = [];
+    for (let key in this.props.users) {
+      let user = this.props.users[key];
+      userArr.push(user)
+    }
+    let userCards = userArr.map(function(accountData) {
+      return <UserCard users={accountData}/>;
+    });
+    return (
+      <div className='row'>
+        <div className='col s12'>
+          <div className='card-panel color-Bp-light'>
+            <SearchBar accounts={accounts}/>
+            <ul className='collection collapsible popout' data-collapsible='accordion'>
+              {userCards}
+            </ul>
+          </div>
+        </div>
+      </div>
+    )
+  }
+});
+var UserCard = React.createClass({
+  showPage: function showPage() {
+      if (userObj.url) {
+        return (
+          <a href={userObj.url} target='_blank' className='secondary-content'>
+            <i className='material-icons'>web</i>
+          </a>
+        )
+      }
+    },
+  render() {
+    let userObj = this.props.users;
+    let classes = 'collection-item avatar color-Bsd color-Tp ' + userObj.name.toLowerCase();
+    return (
+      <li className={classes}>
+        <div className='collapsible-header'>
+          <span className='title'>
+            <img src={userObj.logo} alt={userObj.user} className='circle'/> {userObj.name}
+            <p>
+              <strong>Title:</strong>
+              {userObj.status}</p>
+          </span>
+        </div>
+        <div className='collapsible-body'>
+          <p>
+            <strong>Playing:</strong>
+            {userObj.game}<br/>
+            <strong>Current Views:</strong>
+            {userObj.viewers}<br/>
+            <strong>Followers:</strong>
+            {userObj.followers}
+          </p>
+          <img src={userObj.preview} alt={userObj.user} className='responsive-img'/>
+        </div>
+        {this.showPage}
+      </li>
+    )
+  }
+});
+var Menu = React.createClass({
+  render: function() {
+    return (
+
+      <div className='fixed-action-btn horizontal click-to-toggle' style={{
+        bottom: 45,
+        right: 24
+      }}>
+        <a className='btn-floating btn-large red'>
+          <i className='material-icons'>menu</i>
+        </a>
+        <ul>
+          <li>
+            <a className='btn-floating red'>
+              <i className='material-icons'>insert_chart</i>
+            </a>
+          </li>
+          <li>
+            <a className='btn-floating yellow darken-1'>
+              <i className='material-icons'>format_quote</i>
+            </a>
+          </li>
+          <li>
+            <a className='btn-floating green'>
+              <i className='material-icons'>publish</i>
+            </a>
+          </li>
+          <li>
+            <a className='btn-floating blue'>
+              <i className='material-icons'>attach_file</i>
+            </a>
+          </li>
+        </ul>
+      </div>
+    );
+  }
+});
+var SearchBar = React.createClass({
+  search: function search() {
+  if ($('#search').val().length > 0) {
+    $('.collection-item').css('display', 'none');
+    this.displayResults();
+  } else {
+    $('.collection-item').css('display', 'block');
+  }
+  $('#search').unbind('keyup');
+  $('#search').keyup(this.search);
+},
+  displayResults: function displayResults() {
+    var reg = new RegExp($('#search').val(), 'ig');
+    this.props.accounts.map((name)=>{
+      console.log(reg, name, reg.test(name), ''+name.toLowerCase())
+      if (reg.test(name)){
+        $('.' + name.toLowerCase()).css('display', 'block');
+      }
+    });
+},
+  componentDidMount: function() {
+    $('#search').keyup(this.search);
+  },
+  render() {
+    return (
+      <div className='row'>
+        <form className='col s12' action='action'>
+          <div className='input-field col s12'>
+            <i className='material-icons prefix color-Ts'>search</i>
+            <input className='color-Ts' id='search' type='text' name='search' placeholder='Search for an account ...'/>
+          </div>
+        </form>
+      </div>
+    );
+  }
+});
+var Header = React.createClass({
+  render() {
+    return <header className='page-header center-align'>
+      <nav>
+        <div className='nav-wrapper color-Bp'>
+          <a className='brand-logo center color-Ts'>Twitch Status</a>
+        </div>
+      </nav>
+    </header>
+  }
+});
+var Footer = React.createClass({
+  render: function() {
+    return <footer className='page-footer center-align color-Bp'>
+      <FooterInfo/>
+      <FooterCopyright/>
+    </footer>
+  }
+});
+var FooterCopyright = React.createClass({
+  render: function() {
+    return <div className='footer-copyright'>
+      <div className='container center-align'>
+        Copyright &copy; &nbsp;
+        <a className='color-Ts' href='http://rafase282.github.io/'>Rafael J. Rodriguez</a>
+        &nbsp; 2016. All Rights Reserved
+      </div>
+    </div>
+  }
+});
+var FooterInfoButtons = React.createClass({
+  render: function() {
+    return (
+      <div className='col l4 offset-l2 s12'>
+        <h5 className='color-Ts'>Follow Me!</h5>
+        <div className='col s6'>
+          <ul>
+            <li>
+              <a href='https://github.com/Rafase282' target='_blank'>
+                <span data-position='left' data-tooltip='GitHub' className='devicons devicons-github_badge color-Ts tooltipped'/>
+              </a>
+            </li>
+            <li>
+              <a href='https://www.linkedin.com/in/rafase282' target='_blank'>
+                <i data-position='left' data-tooltip='LinkedIn' className='mdi mdi-linkedin-box small color-Ts tooltipped'/>
+              </a>
+            </li>
+            <li>
+              <a href='http://codepen.io/Rafase282' target='_blank'>
+                <span data-position='left' data-tooltip='Codepen' className='devicons devicons-codepen color-Ts tooltipped'/>
+              </a>
+            </li>
+            <li>
+              <a href='https://www.youtube.com/c/rafaelrodriguez282' target='_blank'>
+                <i data-position='left' data-tooltip='YouTube' className='mdi mdi-youtube-play small color-Ts tooltipped'></i>
+              </a>
+            </li>
+          </ul>
+        </div>
+        <div className='col s6'>
+          <ul>
+            <li>
+              <a href='https://medium.com/@Rafase282' target='_blank'><i data-position='left' data-tooltip='Medium' className='mdi mdi-medium small color-Ts tooltipped'/></a>
+            </li>
+            <li>
+              <a href='https://twitter.com/Rafase282' target='_blank'><i data-position='left' data-tooltip='Twitter' className='mdi mdi-twitter small color-Ts tooltipped'/></a>
+            </li>
+            <li>
+              <a href='http://www.freecodecamp.com/rafase282' target='_blank' style={{
+                fontSize: '2em'
+              }} className='color-Ts'>(<i data-position='left' data-tooltip='Free Code Camp' className='fa fa-fire fa-fw tooltipped'/>)</a>
+            </li>
+            <li>
+              <a href='https://www.twitch.tv/rafase282' target='_blank'><i data-position='left' data-tooltip='Twitch' className='mdi mdi-twitch small color-Ts tooltipped'/></a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    )
+  }
+})
+var FooterInfo = React.createClass({
+  render: function() {
+    return (
+      <div className='container'>
+        <div className='row'>
+          <div className='col l6 s12'>
+            <h5 className='color-Ts'>About the app</h5>
+            <p className='color-Ts-light'>The purpose of the app is to track your favorite streamers so you can see when they are online along with some basic statistics like the number of current views, followers, link to channels and preview of the current stream.
+              <br/>
+              If the user if offline or the account has been closed, it will let you know. You are able to add and remove accounts to keep track of.</p>
+
+          </div>
+          <FooterInfoButtons/>
+        </div>
+      </div>
+    );
+  }
+});
+ReactDOM.render(
+  <App/>, document.getElementById('content'));
