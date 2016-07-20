@@ -38,15 +38,15 @@ var App = React.createClass({
     localStorage.setItem('Rafase282_TwitchApp', JSON.stringify(this.state.accounts));
   },
   makeAccountObj: function Account(name, logo, status, url, viewers, game, preview, followers) {
-        this.name = name;
-        this.logo = logo;
-        this.status = status;
-        this.url = url;
-        this.viewers = viewers;
-        this.game = game;
-        this.preview = preview;
-        this.followers = followers;
-      },
+    this.name = name;
+    this.logo = logo;
+    this.status = status;
+    this.url = url;
+    this.viewers = viewers;
+    this.game = game;
+    this.preview = preview;
+    this.followers = followers;
+  },
   componentDidMount: function() {
     this.serverRequest = $.get('https://api.twitch.tv/kraken/', (res) => {
       let userObj = {};
@@ -159,14 +159,14 @@ var Panel = React.createClass({
 });
 var UserCard = React.createClass({
   showPage: function showPage() {
-      if (userObj.url) {
-        return (
-          <a href={userObj.url} target='_blank' className='secondary-content'>
-            <i className='material-icons'>web</i>
-          </a>
-        )
-      }
-    },
+    if (userObj.url) {
+      return (
+        <a href={userObj.url} target='_blank' className='secondary-content'>
+          <i className='material-icons'>web</i>
+        </a>
+      )
+    }
+  },
   render() {
     let userObj = this.props.users;
     let classes = 'collection-item avatar color-Bsd color-Tp ' + userObj.name.toLowerCase();
@@ -235,24 +235,24 @@ var Menu = React.createClass({
 });
 var SearchBar = React.createClass({
   search: function search() {
-  if ($('#search').val().length > 0) {
-    $('.collection-item').css('display', 'none');
-    this.displayResults();
-  } else {
-    $('.collection-item').css('display', 'block');
-  }
-  $('#search').unbind('keyup');
-  $('#search').keyup(this.search);
-},
+    if ($('#search').val().length > 0) {
+      $('.collection-item').css('display', 'none');
+      this.displayResults();
+    } else {
+      $('.collection-item').css('display', 'block');
+    }
+    $('#search').unbind('keyup');
+    $('#search').keyup(this.search);
+  },
   displayResults: function displayResults() {
     var reg = new RegExp($('#search').val(), 'ig');
-    this.props.accounts.map((name)=>{
-      console.log(reg, name, reg.test(name), ''+name.toLowerCase())
-      if (reg.test(name)){
+    this.props.accounts.map((name) => {
+      console.log(reg, name, reg.test(name), '' + name.toLowerCase())
+      if (reg.test(name)) {
         $('.' + name.toLowerCase()).css('display', 'block');
       }
     });
-},
+  },
   componentDidMount: function() {
     $('#search').keyup(this.search);
   },
