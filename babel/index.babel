@@ -159,9 +159,10 @@ var Panel = React.createClass({
 });
 var UserCard = React.createClass({
   showPage: function showPage() {
-    if (userObj.url) {
+    let url = this.props.users.url;
+    if (url) {
       return (
-        <a href={userObj.url} target='_blank' className='secondary-content'>
+        <a href={url} target='_blank' className='secondary-content'>
           <i className='material-icons'>web</i>
         </a>
       )
@@ -191,7 +192,7 @@ var UserCard = React.createClass({
           </p>
           <img src={userObj.preview} alt={userObj.user} className='responsive-img'/>
         </div>
-        {this.showPage}
+        {this.showPage()}
       </li>
     )
   }

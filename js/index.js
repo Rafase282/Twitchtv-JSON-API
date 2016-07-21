@@ -180,10 +180,11 @@ var UserCard = React.createClass({
   displayName: 'UserCard',
 
   showPage: function showPage() {
-    if (userObj.url) {
+    var url = this.props.users.url;
+    if (url) {
       return React.createElement(
         'a', {
-          href: userObj.url,
+          href: url,
           target: '_blank',
           className: 'secondary-content'
         },
@@ -264,7 +265,7 @@ var UserCard = React.createClass({
           className: 'responsive-img'
         })
       ),
-      this.showPage
+      this.showPage()
     );
   }
 });
