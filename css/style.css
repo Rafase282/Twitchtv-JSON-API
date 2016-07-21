@@ -7,18 +7,21 @@ section {
   -webkit-box-orient: vertical;
   -webkit-box-direction: normal;
   -webkit-flex-direction: column;
-  -ms-flex-direction: column;
-  flex-direction: column;
+      -ms-flex-direction: column;
+          flex-direction: column;
 }
+
 main {
   -webkit-box-flex: 1;
   -webkit-flex: 1 0 auto;
-  -ms-flex: 1 0 auto;
-  flex: 1 0 auto;
+      -ms-flex: 1 0 auto;
+          flex: 1 0 auto;
 }
+
 .devicons {
   font-size: 2.3em;
 }
+
 .board {
   border-style: solid;
   margin: 10%;
@@ -28,38 +31,44 @@ main {
 /* Color variables
  * Use these variables with the
  * color classes. */
-
-
 /* */
-
-
 /* Color Scheme
  * Use these classes for giving color */
-
-
 /* */
-
-.color-Bp, .color-Bp:hover, .color-Bp:active {
+.color-Bp,
+.color-Bp:hover,
+.color-Bp:active {
   background-color: #0d47a1 !important;
 }
-.color-Bp-light, .color-Bp-light:hover, .color-Bp-light:active {
+
+.color-Bp-light,
+.color-Bp-light:hover,
+.color-Bp-light:active {
   background-color: #ff1744 !important;
 }
-.color-Bsd, .color-Bsd:hover, .color-Bsd:active {
+
+.color-Bsd,
+.color-Bsd:hover,
+.color-Bsd:active {
   background-color: #fff !important;
 }
+
 .color-Tp {
   color: #0d47a1 !important;
 }
+
 .color-Ts {
   color: #fff !important;
 }
+
 .color-Ts-dark {
   color: #212121 !important;
 }
+
 .color-Ts-light {
   color: #B6B6B6 !important;
 }
+
 .color-Tp-light {
   color: #ff1744 !important;
 }

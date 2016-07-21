@@ -6,7 +6,7 @@ var App = React.createClass({
   getInitialState: function getInitialState() {
     return {
       accounts: ['freecodecamp', 'storbeck', 'terakilobyte', 'habathcx', 'RobotCaleb', 'thomasballinger', 'noobs2ninjas', 'beohoff', 'MedryBW', 'brunofin', 'comster404', 'quill18', 'rafase282', 'darkness_429', 'kairi78_officiel'],
-      logoURL: 'https://i.imgur.com/vPEp5RQ.png',
+      logoURL: 'https://s-media-cache-ak0.pinimg.com/236x/1b/d0/eb/1bd0eb3468a132c2f8d02a56435ebd1e.jpg',
       user: '',
       channel: '',
       search: '',
@@ -27,16 +27,6 @@ var App = React.createClass({
   componentDidUpdate: function componentDidUpdate(prevProps, prevState) {
     localStorage.setItem('Rafase282_TwitchApp', JSON.stringify(this.state.accounts));
   },
-  makeAccountObj: function Account(name, logo, status, url, viewers, game, preview, followers) {
-    this.name = name;
-    this.logo = logo;
-    this.status = status;
-    this.url = url;
-    this.viewers = viewers;
-    this.game = game;
-    this.preview = preview;
-    this.followers = followers;
-  },
   componentDidMount: function componentDidMount() {
     var _this = this;
 
@@ -56,9 +46,9 @@ var App = React.createClass({
       function getUserInfo(currUser) {
         $.getJSON(userURI + currUser + '?callback=?', function(response) {
           if (response.logo === null) {
-            currUser = new Account(response.display_name, logo);
+            currUser = new Account(response.display_name, logo, response.bio);
           } else {
-            currUser = new Account(response.display_name, response.logo);
+            currUser = new Account(response.display_name, response.logo, response.bio);
           };
           userObj[currUser.name] = currUser;
           if (counter === length) {
@@ -80,10 +70,11 @@ var App = React.createClass({
           } else if (feed.stream !== null && feed.stream !== undefined) {
             currStream.status = feed.stream.channel.status;
             currStream.url = feed.stream.channel.url;
-            currStream.viewers = feed.stream.viewers;
+            currStream.viewers = numeral(feed.stream.viewers).format('0,0');
             currStream.game = feed.stream.game;
             currStream.preview = feed.stream.preview.large;
-            currStream.followers = feed.stream.channel.followers;
+            currStream.followers = numeral(feed.stream.channel.followers).format('0,0');
+            currStream.fps = numeral(feed.stream.average_fps).format('0.00');
           } else {
             currStream.status = 'Offline!';
             setOffline();
@@ -101,9 +92,10 @@ var App = React.createClass({
           }
 
           function setOffline() {
-            currStream.viewers = 0;
-            currStream.game = 'Offline!';
+            currStream.viewers = 'Only Available when online.';
+            currStream.game = 'Only Available when online.';
             currStream.followers = 'Only Available when online.';
+            currStream.fps = 'Only Available when online.';
           }
         });
       };
@@ -112,7 +104,40 @@ var App = React.createClass({
   componentWillUnmount: function componentWillUnmount() {
     this.serverRequest.abort();
   },
+  makeAccountObj: function Account(name, logo, bio, status, url, viewers, game, preview, followers, fps) {
+    this.name = name;
+    this.logo = logo;
+    this.bio = bio;
+    this.status = status;
+    this.url = url;
+    this.viewers = viewers;
+    this.game = game;
+    this.preview = preview;
+    this.followers = followers;
+    this.fps = fps;
+  },
+  setFiltered: function setFiltered(filtered) {
+    this.setState({
+      accounts: fitered
+    });
+  },
+  obj2arr: function obj2arr() {
+    var users = this.state.accInfo;
+    var userArr = [];
+    for (var key in users) {
+      var user = users[key];
+      userArr.push(user);
+    }
+    return userArr;
+  },
   render: function render() {
+    var accounts = this.state.accounts;
+    var userArr = this.obj2arr();
+    var userCards = userArr.map(function(accountData) {
+      return React.createElement(UserCard, {
+        users: accountData
+      });
+    });
     return React.createElement(
       'section', {
         className: 'container-fluid'
@@ -122,64 +147,42 @@ var App = React.createClass({
         'main', {
           className: 'page-content container'
         },
-        React.createElement(Panel, {
-          accounts: this.state.accounts,
-          userURI: this.state.user,
-          streamURI: this.state.streams,
-          logoURL: this.state.logoURL,
-          users: this.state.accInfo
-        }),
+        React.createElement(
+          'div', {
+            className: 'row'
+          },
+          React.createElement(
+            'div', {
+              className: 'col s12'
+            },
+            React.createElement(
+              'div', {
+                className: 'card-panel color-Bp-light'
+              },
+              React.createElement(SearchBar, {
+                setFilter: this.state.setFiltered,
+                accounts: accounts
+              }),
+              React.createElement(
+                'ul', {
+                  className: 'collection collapsible popout',
+                  'data-collapsible': 'accordion'
+                },
+                userCards
+              )
+            )
+          )
+        ),
         React.createElement(Menu, null)
       ),
       React.createElement(Footer, null)
     );
   }
 });
-var Panel = React.createClass({
-  displayName: 'Panel',
-  render: function render() {
-    var accounts = this.props.accounts;
-    var userArr = [];
-    for (var key in this.props.users) {
-      var user = this.props.users[key];
-      userArr.push(user);
-    }
-    var userCards = userArr.map(function(accountData) {
-      return React.createElement(UserCard, {
-        users: accountData
-      });
-    });
-    return React.createElement(
-      'div', {
-        className: 'row'
-      },
-      React.createElement(
-        'div', {
-          className: 'col s12'
-        },
-        React.createElement(
-          'div', {
-            className: 'card-panel color-Bp-light'
-          },
-          React.createElement(SearchBar, {
-            accounts: accounts
-          }),
-          React.createElement(
-            'ul', {
-              className: 'collection collapsible popout',
-              'data-collapsible': 'accordion'
-            },
-            userCards
-          )
-        )
-      )
-    );
-  }
-});
 var UserCard = React.createClass({
   displayName: 'UserCard',
 
-  showPage: function showPage() {
+  showLink: function showLink() {
     var url = this.props.users.url;
     if (url) {
       return React.createElement(
@@ -196,6 +199,10 @@ var UserCard = React.createClass({
         )
       );
     }
+  },
+  showBio: function showBio() {
+    var bio = this.props.users.bio;
+    return bio !== null ? bio : 'No Bio available.';
   },
   render: function render() {
     var userObj = this.props.users;
@@ -225,7 +232,7 @@ var UserCard = React.createClass({
             React.createElement(
               'strong',
               null,
-              'Title:'
+              'Title: '
             ),
             userObj.status
           )
@@ -241,23 +248,37 @@ var UserCard = React.createClass({
           React.createElement(
             'strong',
             null,
-            'Playing:'
+            'Bio: '
+          ),
+          this.showBio(),
+          React.createElement('br', null),
+          React.createElement(
+            'strong',
+            null,
+            'Playing: '
           ),
           userObj.game,
           React.createElement('br', null),
           React.createElement(
             'strong',
             null,
-            'Current Views:'
+            'Current Views: '
           ),
           userObj.viewers,
           React.createElement('br', null),
           React.createElement(
             'strong',
             null,
-            'Followers:'
+            'Followers: '
           ),
-          userObj.followers
+          userObj.followers,
+          React.createElement('br', null),
+          React.createElement(
+            'strong',
+            null,
+            'Stream Average FPS: '
+          ),
+          userObj.fps
         ),
         React.createElement('img', {
           src: userObj.preview,
@@ -265,7 +286,7 @@ var UserCard = React.createClass({
           className: 'responsive-img'
         })
       ),
-      this.showPage()
+      this.showLink()
     );
   }
 });
@@ -365,7 +386,7 @@ var SearchBar = React.createClass({
   search: function search() {
     if ($('#search').val().length > 0) {
       $('.collection-item').css('display', 'none');
-      this.displayResults();
+      this.getFiltered();
     } else {
       $('.collection-item').css('display', 'block');
     }
@@ -374,15 +395,26 @@ var SearchBar = React.createClass({
   },
   displayResults: function displayResults() {
     var reg = new RegExp($('#search').val(), 'ig');
-    this.props.accounts.map(function(name) {
-      console.log(reg, name, reg.test(name), '' + name.toLowerCase());
+    var accounts = this.props.accounts;
+    for (var key in users) {
+      var name = users[key];
       if (reg.test(name)) {
-        $('.' + name.toLowerCase()).css('display', 'block');
+        console.log(reg, name, reg.test(name), '.' + name);
+        $('.' + name).css('display', 'block');
       }
-    });
+    };
   },
+  getFiltered: function getFiltered() {
+    var reg = new RegExp($('#search').val(), 'ig');
+    var names = this.props.accounts;
+    var filtered = names.filter(function(user) {
+      return reg.test(user);
+    });
+    this.props.setFilter(filtered);
+  },
+
   componentDidMount: function componentDidMount() {
-    $('#search').keyup(this.search);
+    //$('#search').keyup(this.search);
   },
   render: function render() {
     return React.createElement(
@@ -405,6 +437,7 @@ var SearchBar = React.createClass({
             'search'
           ),
           React.createElement('input', {
+            onChange: this.getFiltered,
             className: 'color-Ts',
             id: 'search',
             type: 'text',

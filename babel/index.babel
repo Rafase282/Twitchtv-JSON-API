@@ -18,7 +18,7 @@ var App = React.createClass({
         'darkness_429',
         'kairi78_officiel'
       ],
-      logoURL: 'https://i.imgur.com/vPEp5RQ.png',
+      logoURL: 'https://s-media-cache-ak0.pinimg.com/236x/1b/d0/eb/1bd0eb3468a132c2f8d02a56435ebd1e.jpg',
       user: '',
       channel: '',
       search: '',
@@ -37,16 +37,6 @@ var App = React.createClass({
   componentDidUpdate: function(prevProps, prevState) {
     localStorage.setItem('Rafase282_TwitchApp', JSON.stringify(this.state.accounts));
   },
-  makeAccountObj: function Account(name, logo, status, url, viewers, game, preview, followers) {
-    this.name = name;
-    this.logo = logo;
-    this.status = status;
-    this.url = url;
-    this.viewers = viewers;
-    this.game = game;
-    this.preview = preview;
-    this.followers = followers;
-  },
   componentDidMount: function() {
     this.serverRequest = $.get('https://api.twitch.tv/kraken/', (res) => {
       let userObj = {};
@@ -64,9 +54,9 @@ var App = React.createClass({
       function getUserInfo(currUser) {
         $.getJSON(userURI + currUser + '?callback=?', (response) => {
           if (response.logo === null) {
-            currUser = new Account(response.display_name, logo);
+            currUser = new Account(response.display_name, logo, response.bio);
           } else {
-            currUser = new Account(response.display_name, response.logo);
+            currUser = new Account(response.display_name, response.logo, response.bio);
           };
           userObj[currUser.name] = currUser;
           if (counter === length) {
@@ -89,10 +79,11 @@ var App = React.createClass({
           } else if (feed.stream !== null && feed.stream !== undefined) {
             currStream.status = feed.stream.channel.status;
             currStream.url = feed.stream.channel.url;
-            currStream.viewers = feed.stream.viewers;
+            currStream.viewers = numeral(feed.stream.viewers).format('0,0');
             currStream.game = feed.stream.game;
             currStream.preview = feed.stream.preview.large;
-            currStream.followers = feed.stream.channel.followers;
+            currStream.followers = numeral(feed.stream.channel.followers).format('0,0');
+            currStream.fps = numeral(feed.stream.average_fps).format('0.00');
           } else {
             currStream.status = 'Offline!';
             setOffline();
@@ -110,9 +101,10 @@ var App = React.createClass({
           }
 
           function setOffline() {
-            currStream.viewers = 0;
-            currStream.game = 'Offline!';
+            currStream.viewers = 'Only Available when online.';
+            currStream.game = 'Only Available when online.';
             currStream.followers = 'Only Available when online.';
+            currStream.fps = 'Only Available when online.';
           }
         });
       };
@@ -121,44 +113,59 @@ var App = React.createClass({
   componentWillUnmount: function() {
     this.serverRequest.abort();
   },
+  makeAccountObj: function Account(name, logo, bio, status, url, viewers, game, preview, followers, fps) {
+    this.name = name;
+    this.logo = logo;
+    this.bio = bio;
+    this.status = status;
+    this.url = url;
+    this.viewers = viewers;
+    this.game = game;
+    this.preview = preview;
+    this.followers = followers;
+    this.fps = fps;
+  },
+  setFiltered(filtered) {
+    this.setState({
+      accounts: fitered
+    })
+  },
+  obj2arr(){
+    let users = this.state.accInfo;
+    let userArr = [];
+    for (let key in users) {
+      let user = users[key];
+      userArr.push(user)
+    }
+    return userArr;
+  },
   render() {
+    let accounts = this.state.accounts;
+    let userArr = this.obj2arr();
+    let userCards = userArr.map(function(accountData) {
+      return <UserCard users={accountData}/>;
+    });
     return <section className='container-fluid'>
       <Header/>
       <main className='page-content container'>
-        <Panel accounts={this.state.accounts} userURI={this.state.user} streamURI={this.state.streams} logoURL={this.state.logoURL} users={this.state.accInfo}/>
+        <div className='row'>
+          <div className='col s12'>
+            <div className='card-panel color-Bp-light'>
+              <SearchBar  setFilter={this.state.setFiltered} accounts={accounts}/>
+              <ul className='collection collapsible popout' data-collapsible='accordion'>
+                {userCards}
+              </ul>
+            </div>
+          </div>
+        </div>
         <Menu/>
       </main>
       <Footer/>
     </section>;
   }
 });
-var Panel = React.createClass({
-  render() {
-    let accounts = this.props.accounts;
-    let userArr = [];
-    for (let key in this.props.users) {
-      let user = this.props.users[key];
-      userArr.push(user)
-    }
-    let userCards = userArr.map(function(accountData) {
-      return <UserCard users={accountData}/>;
-    });
-    return (
-      <div className='row'>
-        <div className='col s12'>
-          <div className='card-panel color-Bp-light'>
-            <SearchBar accounts={accounts}/>
-            <ul className='collection collapsible popout' data-collapsible='accordion'>
-              {userCards}
-            </ul>
-          </div>
-        </div>
-      </div>
-    )
-  }
-});
 var UserCard = React.createClass({
-  showPage: function showPage() {
+  showLink: function showLink() {
     let url = this.props.users.url;
     if (url) {
       return (
@@ -167,6 +174,10 @@ var UserCard = React.createClass({
         </a>
       )
     }
+  },
+  showBio: function showBio() {
+    let bio = this.props.users.bio;
+    return (bio !== null)? bio : 'No Bio available.';
   },
   render() {
     let userObj = this.props.users;
@@ -177,22 +188,27 @@ var UserCard = React.createClass({
           <span className='title'>
             <img src={userObj.logo} alt={userObj.user} className='circle'/> {userObj.name}
             <p>
-              <strong>Title:</strong>
-              {userObj.status}</p>
+              <strong>Title: </strong>
+              {userObj.status}
+            </p>
           </span>
         </div>
         <div className='collapsible-body'>
           <p>
-            <strong>Playing:</strong>
+            <strong>Bio: </strong>
+            {this.showBio()}<br/>
+            <strong>Playing: </strong>
             {userObj.game}<br/>
-            <strong>Current Views:</strong>
+            <strong>Current Views: </strong>
             {userObj.viewers}<br/>
-            <strong>Followers:</strong>
-            {userObj.followers}
+            <strong>Followers: </strong>
+            {userObj.followers}<br/>
+            <strong>Stream Average FPS: </strong>
+            {userObj.fps}
           </p>
           <img src={userObj.preview} alt={userObj.user} className='responsive-img'/>
         </div>
-        {this.showPage()}
+        {this.showLink()}
       </li>
     )
   }
@@ -238,7 +254,7 @@ var SearchBar = React.createClass({
   search: function search() {
     if ($('#search').val().length > 0) {
       $('.collection-item').css('display', 'none');
-      this.displayResults();
+      this.getFiltered();
     } else {
       $('.collection-item').css('display', 'block');
     }
@@ -247,15 +263,24 @@ var SearchBar = React.createClass({
   },
   displayResults: function displayResults() {
     var reg = new RegExp($('#search').val(), 'ig');
-    this.props.accounts.map((name) => {
-      console.log(reg, name, reg.test(name), '' + name.toLowerCase())
+    let accounts = this.props.accounts;
+    for (let key in users){
+      let name = users[key];
       if (reg.test(name)) {
-        $('.' + name.toLowerCase()).css('display', 'block');
+        console.log(reg, name, reg.test(name), '.' + name)
+        $('.' + name).css('display', 'block');
       }
-    });
+    };
   },
+  getFiltered() {
+    var reg = new RegExp($('#search').val(), 'ig');
+    let names = this.props.accounts;
+    let filtered = names.filter((user) => reg.test(user));
+    this.props.setFilter(filtered)
+    
+   },
   componentDidMount: function() {
-    $('#search').keyup(this.search);
+    //$('#search').keyup(this.search);
   },
   render() {
     return (
@@ -263,7 +288,7 @@ var SearchBar = React.createClass({
         <form className='col s12' action='action'>
           <div className='input-field col s12'>
             <i className='material-icons prefix color-Ts'>search</i>
-            <input className='color-Ts' id='search' type='text' name='search' placeholder='Search for an account ...'/>
+            <input onChange={this.getFiltered} className='color-Ts' id='search' type='text' name='search' placeholder='Search for an account ...'/>
           </div>
         </form>
       </div>
