@@ -29,64 +29,57 @@ var App = React.createClass({
     localStorage.setItem('Rafase282_TwitchApp', JSON.stringify(this.state.accounts));
   },
   getUserInfo: function getUserInfo(currUser) {
-    var _this = this;
-
-    console.log('inside get info, about to run');
-    var userURI = this.state.users;
-    var Account = this.makeAccountObj;
-    var userObj = this.state.accInfo;
-    var logo = this.state.logoURL;
-    $.getJSON(userURI + currUser + '?callback=?', function(response) {
-      if (response.logo === null) {
-        currUser = new Account(response.display_name, logo, response.bio);
-      } else {
-        currUser = new Account(response.display_name, response.logo, response.bio);
-      };
-      userObj[currUser.name] = currUser;
-      _this.setState({
-        accInfo: userObj
-      });
-      console.log('inside get info, ended call');
-    });
+    return axios.get(this.state.users + currUser);
   },
   getStreamInfo: function getStreamInfo(currStream) {
-    var streamURI = this.state.streams;
-    console.log('calling stream');
+    return axios.get(this.state.streams + currStream);
+  },
+  getFullInfo: function getFullInfo(userInfo, feed) {
+    userInfo = userInfo.data;
+    feed = feed.data;
+    var userObj = this.state.accInfo;
+    var logo = this.state.logoURL;
+    var Account = this.makeAccountObj;
+    var user = userInfo.name;
 
     function setOffline() {
-      currStream.viewers = 'Only Available when online.';
-      currStream.game = 'Only Available when online.';
-      currStream.followers = 'Only Available when online.';
-      currStream.fps = 'Only Available when online.';
+      user.viewers = 'Only Available when online.';
+      user.game = 'Only Available when online.';
+      user.followers = 'Only Available when online.';
+      user.fps = 'Only Available when online.';
+    };
+    user = new Account(userInfo.display_name, userInfo.logo ? userInfo.logo : logo, userInfo.bio ? userInfo.bio : 'No Bio available.');
+    if (feed.status == 422) {
+      user.status = 'Account Closed!';
+      setOffline();
+    };
+    if (feed.status == 404) {
+      user.status = feed.message;
+      setOffline();
+    };
+    if (feed.stream) {
+      user.status = feed.stream.channel.status;
+      user.url = feed.stream.channel.url;
+      user.viewers = numeral(feed.stream.viewers).format('0,0');
+      user.game = feed.stream.game;
+      user.preview = feed.stream.preview.large;
+      user.followers = numeral(feed.stream.channel.followers).format('0,0');
+      user.fps = numeral(feed.stream.average_fps).format('0.00');
+    } else {
+      user.status = 'Offline!';
+      setOffline();
     }
-    $.getJSON(streamURI + currStream.name + '?callback=?', function(feed) {
-      console.log(currStream, feed);
-      if (feed.status == 422) {
-        currStream.status = 'Account Closed!';
-        setOffline();
-      } else if (feed.stream !== null && feed.stream !== undefined) {
-        currStream.status = feed.stream.channel.status;
-        currStream.url = feed.stream.channel.url;
-        currStream.viewers = numeral(feed.stream.viewers).format('0,0');
-        currStream.game = feed.stream.game;
-        currStream.preview = feed.stream.preview.large;
-        currStream.followers = numeral(feed.stream.channel.followers).format('0,0');
-        currStream.fps = numeral(feed.stream.average_fps).format('0.00');
-      } else {
-        currStream.status = 'Offline!';
-        setOffline();
-      }
-      this.setState({
-        accInfo: currStream
-      });
+    userObj[userInfo.name] = user;
+    this.setState({
+      accInfo: userObj
     });
   },
 
   componentDidMount: function componentDidMount() {
-    var _this2 = this;
+    var _this = this;
 
     this.serverRequest = $.get('https://api.twitch.tv/kraken/', function(res) {
-      _this2.setState({
+      _this.setState({
         user: res._links.user + '/',
         users: res._links.user + 's/',
         channel: res._links.channel + '/',
@@ -95,17 +88,15 @@ var App = React.createClass({
         ingests: res._links.ingest + '/',
         teams: res._links.teams + '/'
       });
-      var accounts = _this2.state.accounts;
-      var length = accounts.length;
-      console.log('about to call get user info');
-      accounts.forEach(_this2.getUserInfo);
-      console.log('calling get stream');
-      var userObj = _this2.state.accInfo;
-      for (var key in userObj) {
-
-        console.log(_this2);
-        _this2.getStreamInfo(userObj[key]);
-      }
+      var accounts = _this.state.accounts;
+      var getUserInfo = _this.getUserInfo;
+      var getStreamInfo = _this.getStreamInfo;
+      var getFullInfo = _this.getFullInfo;
+      accounts.forEach(function(user) {
+        axios.all([getUserInfo(user), getStreamInfo(user)]).then(axios.spread(getFullInfo)).catch(function(error) {
+          console.log(error);
+        });
+      });
     });
   },
   componentWillUnmount: function componentWillUnmount() {
@@ -257,7 +248,7 @@ var UserCard = React.createClass({
             null,
             'Bio: '
           ),
-          this.showBio(),
+          userObj.bio,
           React.createElement('br', null),
           React.createElement(
             'strong',

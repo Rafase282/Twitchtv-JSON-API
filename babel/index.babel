@@ -39,48 +39,49 @@ var App = React.createClass({
     localStorage.setItem('Rafase282_TwitchApp', JSON.stringify(this.state.accounts));
   },
   getUserInfo(currUser){
-    let userURI = this.state.users
-    let Account = this.makeAccountObj;
-    let userObj = this.state.accInfo;
-    let logo = this.state.logoURL;
-    $.getJSON(userURI + currUser + '?callback=?', (response) => {
-          if (response.logo === null) {
-            currUser = new Account(response.display_name, logo, response.bio);
-          } else {
-            currUser = new Account(response.display_name, response.logo, response.bio);
-          };
-          userObj[currUser.name] = currUser;
-      this.setState({accInfo: userObj})
-        });
+    return axios.get(this.state.users + currUser);
   },
   getStreamInfo(currStream){
-    let streamURI = this.state.streams;
-    console.log('calling stream')
+    return axios.get(this.state.streams + currStream);
+  },
+  getFullInfo(userInfo, feed){
+    userInfo = userInfo.data;
+    feed = feed.data;
+    let userObj = this.state.accInfo;
+    let logo = this.state.logoURL;
+    let Account = this.makeAccountObj;
+    let user = userInfo.name;
     function setOffline() {
-            currStream.viewers = 'Only Available when online.';
-            currStream.game = 'Only Available when online.';
-            currStream.followers = 'Only Available when online.';
-            currStream.fps = 'Only Available when online.';
-          }
-    $.getJSON(streamURI + currStream.name + '?callback=?', function(feed) {
-      console.log(currStream, feed)
-          if (feed.status == 422) {
-            currStream.status = 'Account Closed!';
+            user.viewers = 'Only Available when online.';
+            user.game = 'Only Available when online.';
+            user.followers = 'Only Available when online.';
+            user.fps = 'Only Available when online.';
+          };
+    user = new Account(userInfo.display_name, userInfo.logo? userInfo.logo: logo, userInfo.bio? userInfo.bio: 'No Bio available.');
+    if (feed.status == 422) {
+      user.status = 'Account Closed!';
+      setOffline();
+    };
+    if (feed.status == 404){
+      user.status = feed.message;
+      setOffline()
+    };
+    if (feed.stream) {
+            user.status = feed.stream.channel.status;
+            user.url = feed.stream.channel.url;
+            user.viewers = numeral(feed.stream.viewers).format('0,0');
+            user.game = feed.stream.game;
+            user.preview = feed.stream.preview.large;
+            user.followers = numeral(feed.stream.channel.followers).format('0,0');
+            user.fps = numeral(feed.stream.average_fps).format('0.00');
+   } else {
+            user.status = 'Offline!';
             setOffline();
-          } else if (feed.stream !== null && feed.stream !== undefined) {
-            currStream.status = feed.stream.channel.status;
-            currStream.url = feed.stream.channel.url;
-            currStream.viewers = numeral(feed.stream.viewers).format('0,0');
-            currStream.game = feed.stream.game;
-            currStream.preview = feed.stream.preview.large;
-            currStream.followers = numeral(feed.stream.channel.followers).format('0,0');
-            currStream.fps = numeral(feed.stream.average_fps).format('0.00');
-          } else {
-            currStream.status = 'Offline!';
-            setOffline();
           }
-      this.setState({accInfo: currStream});
-        });
+    userObj[userInfo.name] = user;
+    this.setState({
+      accInfo: userObj
+    })
   },
   componentDidMount: function() {
     this.serverRequest = $.get('https://api.twitch.tv/kraken/', (res) => {
@@ -94,13 +95,16 @@ var App = React.createClass({
               teams: res._links.teams+ '/',
             });
       let accounts = this.state.accounts;
-      let length = accounts.length;
-      accounts.forEach(this.getUserInfo)
-      // Only  run after the forEach has finished.
-      let userObj = this.state.accInfo;
-      for (let key in userObj) {
-        this.getStreamInfo(userObj[key]);
-      }      
+      let getUserInfo = this.getUserInfo;
+      let getStreamInfo = this.getStreamInfo;
+      let getFullInfo = this.getFullInfo;
+      accounts.forEach(function (user){
+        axios.all([getUserInfo(user), getStreamInfo(user)])
+          .then(axios.spread(getFullInfo))
+          .catch(function (error) {
+            console.log(error);
+          })
+      })
     });
   },
   componentWillUnmount: function() {
@@ -189,7 +193,7 @@ var UserCard = React.createClass({
         <div className='collapsible-body'>
           <p>
             <strong>Bio: </strong>
-            {this.showBio()}<br/>
+            {userObj.bio}<br/>
             <strong>Playing: </strong>
             {userObj.game}<br/>
             <strong>Current Views: </strong>
