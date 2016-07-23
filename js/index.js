@@ -5,7 +5,7 @@ var App = React.createClass({
 
   getInitialState: function getInitialState() {
     return {
-      accounts: ['freecodecamp', 'storbeck', 'terakilobyte', 'habathcx', 'RobotCaleb', 'thomasballinger', 'noobs2ninjas', 'beohoff', 'MedryBW', 'brunofin', 'comster404', 'quill18', 'rafase282', 'darkness_429', 'kairi78_officiel'],
+      accounts: ['freecodecamp', 'storbeck', 'terakilobyte', 'habathcx', 'RobotCaleb', 'thomasballinger', 'noobs2ninjas', 'beohoff', 'MedryBW', 'brunofin', 'comster404', 'quill18', 'rafase282', 'darkness_429', 'kairi78_officiel', 'rafase282s'],
       logoURL: 'https://s-media-cache-ak0.pinimg.com/236x/1b/d0/eb/1bd0eb3468a132c2f8d02a56435ebd1e.jpg',
       user: '',
       users: '',
@@ -29,34 +29,53 @@ var App = React.createClass({
     localStorage.setItem('Rafase282_TwitchApp', JSON.stringify(this.state.accounts));
   },
   getUserInfo: function getUserInfo(currUser) {
-    return axios.get(this.state.users + currUser);
+    return axios.get(this.state.users + currUser).catch(function(error) {
+      if (error.response) {
+        return error.response;
+      }
+    });
   },
   getStreamInfo: function getStreamInfo(currStream) {
-    return axios.get(this.state.streams + currStream);
+    return axios.get(this.state.streams + currStream).catch(function(error) {
+      if (error.response) {
+        return error.response;
+      }
+    });
   },
-  getFullInfo: function getFullInfo(userInfo, feed) {
+  getFullInfo: function getFullInfo(userInfo, feed, username) {
     userInfo = userInfo.data;
     feed = feed.data;
     var userObj = this.state.accInfo;
     var logo = this.state.logoURL;
     var Account = this.makeAccountObj;
-    var user = userInfo.name;
+    var user = username;
 
-    function setOffline() {
-      user.viewers = 'Only Available when online.';
-      user.game = 'Only Available when online.';
-      user.followers = 'Only Available when online.';
-      user.fps = 'Only Available when online.';
+    function checkStatus() {
+      switch (feed.status) {
+        case 404:
+          user.status = feed.message;
+          user.name = username;
+          setOffline(feed.message);
+          break;
+        case 422:
+          user.status = 'Account Closed!';
+          setOffline(feed.message);
+          break;
+        default:
+          user.status = 'Offline!';
+          setOffline('Only Available when online.');
+
+      }
+    };
+
+    function setOffline(msg) {
+      user.viewers = msg;
+      user.game = msg;
+      user.followers = msg;
+      user.fps = msg;
     };
     user = new Account(userInfo.display_name, userInfo.logo ? userInfo.logo : logo, userInfo.bio ? userInfo.bio : 'No Bio available.');
-    if (feed.status == 422) {
-      user.status = 'Account Closed!';
-      setOffline();
-    };
-    if (feed.status == 404) {
-      user.status = feed.message;
-      setOffline();
-    };
+    checkStatus();
     if (feed.stream) {
       user.status = feed.stream.channel.status;
       user.url = feed.stream.channel.url;
@@ -65,10 +84,7 @@ var App = React.createClass({
       user.preview = feed.stream.preview.large;
       user.followers = numeral(feed.stream.channel.followers).format('0,0');
       user.fps = numeral(feed.stream.average_fps).format('0.00');
-    } else {
-      user.status = 'Offline!';
-      setOffline();
-    }
+    };
     userObj[userInfo.name] = user;
     this.setState({
       accInfo: userObj
@@ -93,9 +109,7 @@ var App = React.createClass({
       var getStreamInfo = _this.getStreamInfo;
       var getFullInfo = _this.getFullInfo;
       accounts.forEach(function(user) {
-        axios.all([getUserInfo(user), getStreamInfo(user)]).then(axios.spread(getFullInfo)).catch(function(error) {
-          console.log(error);
-        });
+        axios.all([getUserInfo(user), getStreamInfo(user), user]).then(axios.spread(getFullInfo));
       });
     });
   },
@@ -203,6 +217,7 @@ var UserCard = React.createClass({
     return bio !== null ? bio : 'No Bio available.';
   },
   render: function render() {
+
     var userObj = this.props.users;
     var classes = 'collection-item avatar color-Bsd color-Tp ' + userObj.name.toLowerCase();
     return React.createElement(
