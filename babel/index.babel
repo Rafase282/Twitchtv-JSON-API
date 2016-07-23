@@ -1,7 +1,8 @@
-var App = React.createClass({
-  getInitialState: function() {
-    return {
-      accounts: [
+class App extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+			streamers: [
         'freecodecamp',
         'storbeck',
         'terakilobyte',
@@ -17,154 +18,123 @@ var App = React.createClass({
         'rafase282',
         'darkness_429',
         'kairi78_officiel',
-        'rafase282s'
+        'rafase282s',
+        'esl_sc2'
       ],
-      logoURL: 'https://s-media-cache-ak0.pinimg.com/236x/1b/d0/eb/1bd0eb3468a132c2f8d02a56435ebd1e.jpg',
-      user: '',
-      users: '',
-      channel: '',
-      search: '',
-      streams: '',
-      ingests: '',
-      teams: '',
-      accInfo: {}
-    }
-  },
-  componentWillMount: function() {
+      filteredStreamersPayloads: [],
+			allStreamersPayloads: []
+		}
+  }
+  componentWillMount() {
     let accList = JSON.parse(localStorage.getItem('Rafase282_TwitchApp'));
     if (accList) {
-      this.setState({accounts: accList})
+      this.setState({streamers: accList})
     }
-  },
-  componentDidUpdate: function(prevProps, prevState) {
-    localStorage.setItem('Rafase282_TwitchApp', JSON.stringify(this.state.accounts));
-  },
-  getUserInfo(currUser){
-    return axios.get(this.state.users + currUser).catch(function (error) {
+  }
+  componentDidMount() {
+		this.state.streamers.forEach((streamer) => {
+			this.getStreamerFullData(streamer);
+		});
+	}
+  componentDidUpdate(prevProps, nextProps) {
+    localStorage.setItem('Rafase282_TwitchApp', JSON.stringify(this.state.streamers));
+  }
+  getUserData(streamer){
+    return axios.get('https://api.twitch.tv/kraken/users/' + streamer)
+      .catch(function (error) {
     if (error.response) {
       return error.response;
     }
   });
 
-  },
-  getStreamInfo(currStream){
-    return axios.get(this.state.streams + currStream).catch(function (error) {
+  }
+  getStreamData(streamer){
+    return axios.get('https://api.twitch.tv/kraken/streams/' + streamer)
+      .catch(function (error) {
     if (error.response) {
       return error.response;
     }
   });
-  },
-  getFullInfo(userInfo, feed, username){
-    userInfo = userInfo.data;
-    feed = feed.data;
-    let userObj = this.state.accInfo;
-    let logo = this.state.logoURL;
-    let Account = this.makeAccountObj;
-    let user = username;
-    function checkStatus(){
-      switch (feed.status) {
-          case 404:
-            user.status = feed.message;
-            user.name = username;
-            setOffline(feed.message);
-            break;      
-          case 422:
-            user.status = 'Account Closed!';
-            setOffline(feed.message);
-            break;
-          default:
-            user.status = 'Offline!';
-            setOffline('Only Available when online.');
-      
   }
-    };
+  constructPayloadForStreamer(data){
+    const {streamData, userData} = data;
+    let user, logo, bio, status, url, viewers, game, preview, followers, fps;
     function setOffline(msg) {
-            user.viewers = msg;
-            user.game = msg;
-            user.followers = msg;
-            user.fps = msg;
-          };
-    user = new Account(userInfo.display_name, userInfo.logo? userInfo.logo: logo, userInfo.bio? userInfo.bio: 'No Bio available.');
-    checkStatus();
-    if (feed.stream) {
-            user.status = feed.stream.channel.status;
-            user.url = feed.stream.channel.url;
-            user.viewers = numeral(feed.stream.viewers).format('0,0');
-            user.game = feed.stream.game;
-            user.preview = feed.stream.preview.large;
-            user.followers = numeral(feed.stream.channel.followers).format('0,0');
-            user.fps = numeral(feed.stream.average_fps).format('0.00');
-   };
-    userObj[userInfo.name] = user;
-    this.setState({
-      accInfo: userObj
-    })
-  },
-  componentDidMount: function() {
-    this.serverRequest = $.get('https://api.twitch.tv/kraken/', (res) => {
-      this.setState({
-              user: res._links.user+ '/',
-              users: res._links.user + 's/',
-              channel: res._links.channel + '/',
-              search: res._links.search+ '/',
-              streams: res._links.streams + '/',
-              ingests: res._links.ingest+ '/',
-              teams: res._links.teams+ '/',
-            });
-      let accounts = this.state.accounts;
-      let getUserInfo = this.getUserInfo;
-      let getStreamInfo = this.getStreamInfo;
-      let getFullInfo = this.getFullInfo;
-      accounts.forEach(function (user){
-        axios.all([getUserInfo(user), getStreamInfo(user), user]).then(axios.spread(getFullInfo))
-      })
-    });
-  },
-  componentWillUnmount: function() {
-    this.serverRequest.abort();
-  },
-  makeAccountObj: function Account(name, logo, bio, status, url, viewers, game, preview, followers, fps) {
-    this.name = name;
-    this.logo = logo;
-    this.bio = bio;
-    this.status = status;
-    this.url = url;
-    this.viewers = viewers;
-    this.game = game;
-    this.preview = preview;
-    this.followers = followers;
-    this.fps = fps;
-  },
-  setFiltered(filtered) {
-    this.setState({
-      accounts: fitered
-    })
-  },
-  obj2arr(){
-    let users = this.state.accInfo;
-    let userArr = [];
-    for (let key in users) {
-      let user = users[key];
-      userArr.push(user)
+      viewers = msg;
+      game = msg;
+      followers = msg;
+      fps = msg;
+    };
+    switch (streamData.status) {
+        case 404:
+          status = streamData.message;
+          setOffline(streamData.message);
+          break;      
+        case 422:
+          status = 'Account Closed!';
+          setOffline(streamData.message);
+          break;       
     }
-    return userArr;
-  },
+    user = userData.display_name || streamData.message.split("'")[1];
+      logo = userData.logo ? userData.logo: 'https://s-media-cache-ak0.pinimg.com/236x/1b/d0/eb/1bd0eb3468a132c2f8d02a56435ebd1e.jpg';
+      bio = userData.bio ? userData.bio: 'No Bio available.';
+    if(streamData.stream){
+      status = streamData.stream.channel.status;
+      url = streamData.stream.channel.url;
+      viewers = numeral(streamData.stream.viewers).format('0,0');
+      game = streamData.stream.game;
+      preview = streamData.stream.preview.large;
+      followers = numeral(streamData.stream.channel.followers).format('0,0');
+      fps = numeral(streamData.stream.average_fps).format('0.00');
+    } else {
+      status = 'Offline!';
+      setOffline('Only Available when online.');
+    }
+    return {
+      user, logo, bio, status, url, viewers, game, preview, followers, fps
+    }
+  }
+  getStreamerFullData(streamer) {
+		return axios.all([this.getStreamData(streamer), this.getUserData(streamer)])
+			.then(axios.spread((stream, user) => {
+				return {
+          streamData: stream.data,
+          userData: user.data
+        }
+			}))
+			.then((data) => this.constructPayloadForStreamer(data))
+			.then((payload) => {
+				this.state.allStreamersPayloads.push(payload);
+				this.state.filteredStreamersPayloads.push(payload);
+				this.forceUpdate();
+		  })
+	}
+  filterStreamers(event) {
+		const updated = this.state.streamers
+		.filter((item) => {
+      return item.toLowerCase().search(event.target.value.toLowerCase()) !== -1;
+    })
+		.map((item) => item.toLowerCase());
+		
+		const updatedPayloadsList = this.state.allStreamersPayloads.filter((payload) => {
+			return updated.indexOf(payload.user.toLowerCase()) !== -1;
+		});
+		
+		this.setState({
+			filteredStreamersPayloads: updatedPayloadsList
+		});
+		console.log('updated: ', updated);
+		console.log('updatedPayloadsList: ', updatedPayloadsList);
+	}
   render() {
-    let accounts = this.state.accounts;
-    let userArr = this.obj2arr();
-    let userCards = userArr.map(function(accountData) {
-      return <UserCard users={accountData}/>;
-    });
     return <section className='container-fluid'>
       <Header/>
       <main className='page-content container'>
         <div className='row'>
           <div className='col s12'>
             <div className='card-panel color-Bp-light'>
-              <SearchBar  setFilter={this.state.setFiltered} accounts={accounts}/>
-              <ul className='collection collapsible popout' data-collapsible='accordion'>
-                {userCards}
-              </ul>
+              <SearchBar filterStreamers={this.filterStreamers.bind(this)} />
+              <FilteredList filteredStreamersPayloads={this.state.filteredStreamersPayloads} />
             </div>
           </div>
         </div>
@@ -173,10 +143,20 @@ var App = React.createClass({
       <Footer/>
     </section>;
   }
-});
-var UserCard = React.createClass({
-  showLink: function showLink() {
-    let url = this.props.users.url;
+}
+
+const FilteredList = (props) => {
+	return (
+			<ul className='collection collapsible popout' data-collapsible='accordion'>
+				{ props.filteredStreamersPayloads.map((payload, i) => {
+		        return <UserCard key={i} payload={payload} /> })
+				}
+			</ul>
+		)
+}
+const UserCard = (props) => {
+    const {user, logo, bio, status, url, viewers, game, preview, followers, fps } = props.payload;
+  const showLink = ()=>{
     if (url) {
       return (
         <a href={url} target='_blank' className='secondary-content'>
@@ -184,50 +164,39 @@ var UserCard = React.createClass({
         </a>
       )
     }
-  },
-  showBio: function showBio() {
-    let bio = this.props.users.bio;
-    return (bio !== null)? bio : 'No Bio available.';
-  },
-  render() {
-    
-    let userObj = this.props.users;
-    let classes = 'collection-item avatar color-Bsd color-Tp ' + userObj.name.toLowerCase();
+  }
     return (
-      <li className={classes}>
+      <li className='collection-item avatar color-Bsd color-Tp'>
         <div className='collapsible-header'>
           <span className='title'>
-            <img src={userObj.logo} alt={userObj.user} className='circle'/> {userObj.name}
+            <img src={logo} alt={user} className='circle'/> {user}
             <p>
               <strong>Title: </strong>
-              {userObj.status}
+              {status}
             </p>
           </span>
         </div>
         <div className='collapsible-body'>
           <p>
             <strong>Bio: </strong>
-            {userObj.bio}<br/>
+            {bio}<br/>
             <strong>Playing: </strong>
-            {userObj.game}<br/>
+            {game}<br/>
             <strong>Current Views: </strong>
-            {userObj.viewers}<br/>
+            {viewers}<br/>
             <strong>Followers: </strong>
-            {userObj.followers}<br/>
+            {followers}<br/>
             <strong>Stream Average FPS: </strong>
-            {userObj.fps}
+            {fps}
           </p>
-          <img src={userObj.preview} alt={userObj.user} className='responsive-img'/>
+          <img src={preview} alt={user} className='responsive-img'/>
         </div>
-        {this.showLink()}
+        {showLink()}
       </li>
     )
-  }
-});
-var Menu = React.createClass({
-  render: function() {
+}
+const Menu = () => {
     return (
-
       <div className='fixed-action-btn horizontal click-to-toggle' style={{
         bottom: 45,
         right: 24
@@ -259,55 +228,20 @@ var Menu = React.createClass({
         </ul>
       </div>
     );
-  }
-});
-var SearchBar = React.createClass({
-  search: function search() {
-    if ($('#search').val().length > 0) {
-      $('.collection-item').css('display', 'none');
-      this.getFiltered();
-    } else {
-      $('.collection-item').css('display', 'block');
-    }
-    $('#search').unbind('keyup');
-    $('#search').keyup(this.search);
-  },
-  displayResults: function displayResults() {
-    var reg = new RegExp($('#search').val(), 'ig');
-    let accounts = this.props.accounts;
-    for (let key in users){
-      let name = users[key];
-      if (reg.test(name)) {
-        console.log(reg, name, reg.test(name), '.' + name)
-        $('.' + name).css('display', 'block');
-      }
-    };
-  },
-  getFiltered() {
-    var reg = new RegExp($('#search').val(), 'ig');
-    let names = this.props.accounts;
-    let filtered = names.filter((user) => reg.test(user));
-    this.props.setFilter(filtered)
-    
-   },
-  componentDidMount: function() {
-    //$('#search').keyup(this.search);
-  },
-  render() {
+}
+const SearchBar = (props) => {
     return (
       <div className='row'>
         <form className='col s12' action='action'>
           <div className='input-field col s12'>
             <i className='material-icons prefix color-Ts'>search</i>
-            <input onChange={this.getFiltered} className='color-Ts' id='search' type='text' name='search' placeholder='Search for an account ...'/>
+            <input onChange={props.filterStreamers} className='color-Ts' id='search' type='text' name='search' placeholder='Search for an account ...'/>
           </div>
         </form>
       </div>
     );
-  }
-});
-var Header = React.createClass({
-  render() {
+}
+const Header = () => {
     return <header className='page-header center-align'>
       <nav>
         <div className='nav-wrapper color-Bp'>
@@ -315,18 +249,14 @@ var Header = React.createClass({
         </div>
       </nav>
     </header>
-  }
-});
-var Footer = React.createClass({
-  render: function() {
+}
+const Footer = () => {
     return <footer className='page-footer center-align color-Bp'>
       <FooterInfo/>
       <FooterCopyright/>
     </footer>
-  }
-});
-var FooterCopyright = React.createClass({
-  render: function() {
+}
+const FooterCopyright = () => {
     return <div className='footer-copyright'>
       <div className='container center-align'>
         Copyright &copy; &nbsp;
@@ -334,10 +264,8 @@ var FooterCopyright = React.createClass({
         &nbsp; 2016. All Rights Reserved
       </div>
     </div>
-  }
-});
-var FooterInfoButtons = React.createClass({
-  render: function() {
+}
+const FooterInfoButtons = () => {
     return (
       <div className='col l4 offset-l2 s12'>
         <h5 className='color-Ts'>Follow Me!</h5>
@@ -385,10 +313,8 @@ var FooterInfoButtons = React.createClass({
         </div>
       </div>
     )
-  }
-})
-var FooterInfo = React.createClass({
-  render: function() {
+}
+const FooterInfo = () => {
     return (
       <div className='container'>
         <div className='row'>
@@ -403,7 +329,9 @@ var FooterInfo = React.createClass({
         </div>
       </div>
     );
-  }
-});
+};
+
 ReactDOM.render(
-  <App/>, document.getElementById('content'));
+	<App />,
+	document.querySelector('#content')
+)

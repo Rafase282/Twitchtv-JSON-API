@@ -1,155 +1,182 @@
 'use strict';
 
-var App = React.createClass({
-  displayName: 'App',
+function _classCallCheck(instance, Constructor) {
+  if (!(instance instanceof Constructor)) {
+    throw new TypeError("Cannot call a class as a function");
+  }
+}
 
-  getInitialState: function getInitialState() {
-    return {
-      accounts: ['freecodecamp', 'storbeck', 'terakilobyte', 'habathcx', 'RobotCaleb', 'thomasballinger', 'noobs2ninjas', 'beohoff', 'MedryBW', 'brunofin', 'comster404', 'quill18', 'rafase282', 'darkness_429', 'kairi78_officiel', 'rafase282s'],
-      logoURL: 'https://s-media-cache-ak0.pinimg.com/236x/1b/d0/eb/1bd0eb3468a132c2f8d02a56435ebd1e.jpg',
-      user: '',
-      users: '',
-      channel: '',
-      search: '',
-      streams: '',
-      ingests: '',
-      teams: '',
-      accInfo: {}
+function _possibleConstructorReturn(self, call) {
+  if (!self) {
+    throw new ReferenceError("this hasn't been initialised - super() hasn't been called");
+  }
+  return call && (typeof call === "object" || typeof call === "function") ? call : self;
+}
+
+function _inherits(subClass, superClass) {
+  if (typeof superClass !== "function" && superClass !== null) {
+    throw new TypeError("Super expression must either be null or a function, not " + typeof superClass);
+  }
+  subClass.prototype = Object.create(superClass && superClass.prototype, {
+    constructor: {
+      value: subClass,
+      enumerable: false,
+      writable: true,
+      configurable: true
+    }
+  });
+  if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass;
+}
+
+var App = function(_React$Component) {
+  _inherits(App, _React$Component);
+
+  function App(props) {
+    _classCallCheck(this, App);
+
+    var _this = _possibleConstructorReturn(this, _React$Component.call(this, props));
+
+    _this.state = {
+      streamers: ['freecodecamp', 'storbeck', 'terakilobyte', 'habathcx', 'RobotCaleb', 'thomasballinger', 'noobs2ninjas', 'beohoff', 'MedryBW', 'brunofin', 'comster404', 'quill18', 'rafase282', 'darkness_429', 'kairi78_officiel', 'rafase282s', 'esl_sc2'],
+      filteredStreamersPayloads: [],
+      allStreamersPayloads: []
     };
-  },
-  componentWillMount: function componentWillMount() {
+    return _this;
+  }
+
+  App.prototype.componentWillMount = function componentWillMount() {
     var accList = JSON.parse(localStorage.getItem('Rafase282_TwitchApp'));
     if (accList) {
       this.setState({
-        accounts: accList
+        streamers: accList
       });
     }
-  },
-  componentDidUpdate: function componentDidUpdate(prevProps, prevState) {
-    localStorage.setItem('Rafase282_TwitchApp', JSON.stringify(this.state.accounts));
-  },
-  getUserInfo: function getUserInfo(currUser) {
-    return axios.get(this.state.users + currUser).catch(function(error) {
+  };
+
+  App.prototype.componentDidMount = function componentDidMount() {
+    var _this2 = this;
+
+    this.state.streamers.forEach(function(streamer) {
+      _this2.getStreamerFullData(streamer);
+    });
+  };
+
+  App.prototype.componentDidUpdate = function componentDidUpdate(prevProps, nextProps) {
+    localStorage.setItem('Rafase282_TwitchApp', JSON.stringify(this.state.streamers));
+  };
+
+  App.prototype.getUserData = function getUserData(streamer) {
+    return axios.get('https://api.twitch.tv/kraken/users/' + streamer).catch(function(error) {
       if (error.response) {
         return error.response;
       }
     });
-  },
-  getStreamInfo: function getStreamInfo(currStream) {
-    return axios.get(this.state.streams + currStream).catch(function(error) {
+  };
+
+  App.prototype.getStreamData = function getStreamData(streamer) {
+    return axios.get('https://api.twitch.tv/kraken/streams/' + streamer).catch(function(error) {
       if (error.response) {
         return error.response;
       }
     });
-  },
-  getFullInfo: function getFullInfo(userInfo, feed, username) {
-    userInfo = userInfo.data;
-    feed = feed.data;
-    var userObj = this.state.accInfo;
-    var logo = this.state.logoURL;
-    var Account = this.makeAccountObj;
-    var user = username;
+  };
 
-    function checkStatus() {
-      switch (feed.status) {
-        case 404:
-          user.status = feed.message;
-          user.name = username;
-          setOffline(feed.message);
-          break;
-        case 422:
-          user.status = 'Account Closed!';
-          setOffline(feed.message);
-          break;
-        default:
-          user.status = 'Offline!';
-          setOffline('Only Available when online.');
+  App.prototype.constructPayloadForStreamer = function constructPayloadForStreamer(data) {
+    var streamData = data.streamData;
+    var userData = data.userData;
 
-      }
-    };
+    var user = undefined,
+      logo = undefined,
+      bio = undefined,
+      status = undefined,
+      url = undefined,
+      viewers = undefined,
+      game = undefined,
+      preview = undefined,
+      followers = undefined,
+      fps = undefined;
 
     function setOffline(msg) {
-      user.viewers = msg;
-      user.game = msg;
-      user.followers = msg;
-      user.fps = msg;
+      viewers = msg;
+      game = msg;
+      followers = msg;
+      fps = msg;
     };
-    user = new Account(userInfo.display_name, userInfo.logo ? userInfo.logo : logo, userInfo.bio ? userInfo.bio : 'No Bio available.');
-    checkStatus();
-    if (feed.stream) {
-      user.status = feed.stream.channel.status;
-      user.url = feed.stream.channel.url;
-      user.viewers = numeral(feed.stream.viewers).format('0,0');
-      user.game = feed.stream.game;
-      user.preview = feed.stream.preview.large;
-      user.followers = numeral(feed.stream.channel.followers).format('0,0');
-      user.fps = numeral(feed.stream.average_fps).format('0.00');
-    };
-    userObj[userInfo.name] = user;
-    this.setState({
-      accInfo: userObj
-    });
-  },
-
-  componentDidMount: function componentDidMount() {
-    var _this = this;
-
-    this.serverRequest = $.get('https://api.twitch.tv/kraken/', function(res) {
-      _this.setState({
-        user: res._links.user + '/',
-        users: res._links.user + 's/',
-        channel: res._links.channel + '/',
-        search: res._links.search + '/',
-        streams: res._links.streams + '/',
-        ingests: res._links.ingest + '/',
-        teams: res._links.teams + '/'
-      });
-      var accounts = _this.state.accounts;
-      var getUserInfo = _this.getUserInfo;
-      var getStreamInfo = _this.getStreamInfo;
-      var getFullInfo = _this.getFullInfo;
-      accounts.forEach(function(user) {
-        axios.all([getUserInfo(user), getStreamInfo(user), user]).then(axios.spread(getFullInfo));
-      });
-    });
-  },
-  componentWillUnmount: function componentWillUnmount() {
-    this.serverRequest.abort();
-  },
-  makeAccountObj: function Account(name, logo, bio, status, url, viewers, game, preview, followers, fps) {
-    this.name = name;
-    this.logo = logo;
-    this.bio = bio;
-    this.status = status;
-    this.url = url;
-    this.viewers = viewers;
-    this.game = game;
-    this.preview = preview;
-    this.followers = followers;
-    this.fps = fps;
-  },
-  setFiltered: function setFiltered(filtered) {
-    this.setState({
-      accounts: fitered
-    });
-  },
-  obj2arr: function obj2arr() {
-    var users = this.state.accInfo;
-    var userArr = [];
-    for (var key in users) {
-      var user = users[key];
-      userArr.push(user);
+    switch (streamData.status) {
+      case 404:
+        status = streamData.message;
+        setOffline(streamData.message);
+        break;
+      case 422:
+        status = 'Account Closed!';
+        setOffline(streamData.message);
+        break;
     }
-    return userArr;
-  },
-  render: function render() {
-    var accounts = this.state.accounts;
-    var userArr = this.obj2arr();
-    var userCards = userArr.map(function(accountData) {
-      return React.createElement(UserCard, {
-        users: accountData
-      });
+    user = userData.display_name || streamData.message.split("'")[1];
+    logo = userData.logo ? userData.logo : 'https://s-media-cache-ak0.pinimg.com/236x/1b/d0/eb/1bd0eb3468a132c2f8d02a56435ebd1e.jpg';
+    bio = userData.bio ? userData.bio : 'No Bio available.';
+    if (streamData.stream) {
+      status = streamData.stream.channel.status;
+      url = streamData.stream.channel.url;
+      viewers = numeral(streamData.stream.viewers).format('0,0');
+      game = streamData.stream.game;
+      preview = streamData.stream.preview.large;
+      followers = numeral(streamData.stream.channel.followers).format('0,0');
+      fps = numeral(streamData.stream.average_fps).format('0.00');
+    } else {
+      status = 'Offline!';
+      setOffline('Only Available when online.');
+    }
+    return {
+      user: user,
+      logo: logo,
+      bio: bio,
+      status: status,
+      url: url,
+      viewers: viewers,
+      game: game,
+      preview: preview,
+      followers: followers,
+      fps: fps
+    };
+  };
+
+  App.prototype.getStreamerFullData = function getStreamerFullData(streamer) {
+    var _this3 = this;
+
+    return axios.all([this.getStreamData(streamer), this.getUserData(streamer)]).then(axios.spread(function(stream, user) {
+      return {
+        streamData: stream.data,
+        userData: user.data
+      };
+    })).then(function(data) {
+      return _this3.constructPayloadForStreamer(data);
+    }).then(function(payload) {
+      _this3.state.allStreamersPayloads.push(payload);
+      _this3.state.filteredStreamersPayloads.push(payload);
+      _this3.forceUpdate();
     });
+  };
+
+  App.prototype.filterStreamers = function filterStreamers(event) {
+    var updated = this.state.streamers.filter(function(item) {
+      return item.toLowerCase().search(event.target.value.toLowerCase()) !== -1;
+    }).map(function(item) {
+      return item.toLowerCase();
+    });
+
+    var updatedPayloadsList = this.state.allStreamersPayloads.filter(function(payload) {
+      return updated.indexOf(payload.user.toLowerCase()) !== -1;
+    });
+
+    this.setState({
+      filteredStreamersPayloads: updatedPayloadsList
+    });
+    console.log('updated: ', updated);
+    console.log('updatedPayloadsList: ', updatedPayloadsList);
+  };
+
+  App.prototype.render = function render() {
     return React.createElement(
       'section', {
         className: 'container-fluid'
@@ -172,16 +199,11 @@ var App = React.createClass({
                 className: 'card-panel color-Bp-light'
               },
               React.createElement(SearchBar, {
-                setFilter: this.state.setFiltered,
-                accounts: accounts
+                filterStreamers: this.filterStreamers.bind(this)
               }),
-              React.createElement(
-                'ul', {
-                  className: 'collection collapsible popout',
-                  'data-collapsible': 'accordion'
-                },
-                userCards
-              )
+              React.createElement(FilteredList, {
+                filteredStreamersPayloads: this.state.filteredStreamersPayloads
+              })
             )
           )
         ),
@@ -189,13 +211,39 @@ var App = React.createClass({
       ),
       React.createElement(Footer, null)
     );
-  }
-});
-var UserCard = React.createClass({
-  displayName: 'UserCard',
+  };
 
-  showLink: function showLink() {
-    var url = this.props.users.url;
+  return App;
+}(React.Component);
+
+var FilteredList = function FilteredList(props) {
+  return React.createElement(
+    'ul', {
+      className: 'collection collapsible popout',
+      'data-collapsible': 'accordion'
+    },
+    props.filteredStreamersPayloads.map(function(payload, i) {
+      return React.createElement(UserCard, {
+        key: i,
+        payload: payload
+      });
+    })
+  );
+};
+var UserCard = function UserCard(props) {
+  var _props$payload = props.payload;
+  var user = _props$payload.user;
+  var logo = _props$payload.logo;
+  var bio = _props$payload.bio;
+  var status = _props$payload.status;
+  var url = _props$payload.url;
+  var viewers = _props$payload.viewers;
+  var game = _props$payload.game;
+  var preview = _props$payload.preview;
+  var followers = _props$payload.followers;
+  var fps = _props$payload.fps;
+
+  var showLink = function showLink() {
     if (url) {
       return React.createElement(
         'a', {
@@ -211,121 +259,274 @@ var UserCard = React.createClass({
         )
       );
     }
-  },
-  showBio: function showBio() {
-    var bio = this.props.users.bio;
-    return bio !== null ? bio : 'No Bio available.';
-  },
-  render: function render() {
-
-    var userObj = this.props.users;
-    var classes = 'collection-item avatar color-Bsd color-Tp ' + userObj.name.toLowerCase();
-    return React.createElement(
-      'li', {
-        className: classes
+  };
+  return React.createElement(
+    'li', {
+      className: 'collection-item avatar color-Bsd color-Tp'
+    },
+    React.createElement(
+      'div', {
+        className: 'collapsible-header'
       },
       React.createElement(
-        'div', {
-          className: 'collapsible-header'
+        'span', {
+          className: 'title'
         },
-        React.createElement(
-          'span', {
-            className: 'title'
-          },
-          React.createElement('img', {
-            src: userObj.logo,
-            alt: userObj.user,
-            className: 'circle'
-          }),
-          ' ',
-          userObj.name,
-          React.createElement(
-            'p',
-            null,
-            React.createElement(
-              'strong',
-              null,
-              'Title: '
-            ),
-            userObj.status
-          )
-        )
-      ),
-      React.createElement(
-        'div', {
-          className: 'collapsible-body'
-        },
+        React.createElement('img', {
+          src: logo,
+          alt: user,
+          className: 'circle'
+        }),
+        ' ',
+        user,
         React.createElement(
           'p',
           null,
           React.createElement(
             'strong',
             null,
-            'Bio: '
+            'Title: '
           ),
-          userObj.bio,
-          React.createElement('br', null),
-          React.createElement(
-            'strong',
-            null,
-            'Playing: '
-          ),
-          userObj.game,
-          React.createElement('br', null),
-          React.createElement(
-            'strong',
-            null,
-            'Current Views: '
-          ),
-          userObj.viewers,
-          React.createElement('br', null),
-          React.createElement(
-            'strong',
-            null,
-            'Followers: '
-          ),
-          userObj.followers,
-          React.createElement('br', null),
-          React.createElement(
-            'strong',
-            null,
-            'Stream Average FPS: '
-          ),
-          userObj.fps
-        ),
-        React.createElement('img', {
-          src: userObj.preview,
-          alt: userObj.user,
-          className: 'responsive-img'
-        })
-      ),
-      this.showLink()
-    );
-  }
-});
-var Menu = React.createClass({
-  displayName: 'Menu',
-
-  render: function render() {
-    return React.createElement(
+          status
+        )
+      )
+    ),
+    React.createElement(
       'div', {
-        className: 'fixed-action-btn horizontal click-to-toggle',
-        style: {
-          bottom: 45,
-          right: 24
-        }
+        className: 'collapsible-body'
       },
       React.createElement(
-        'a', {
-          className: 'btn-floating btn-large red'
+        'p',
+        null,
+        React.createElement(
+          'strong',
+          null,
+          'Bio: '
+        ),
+        bio,
+        React.createElement('br', null),
+        React.createElement(
+          'strong',
+          null,
+          'Playing: '
+        ),
+        game,
+        React.createElement('br', null),
+        React.createElement(
+          'strong',
+          null,
+          'Current Views: '
+        ),
+        viewers,
+        React.createElement('br', null),
+        React.createElement(
+          'strong',
+          null,
+          'Followers: '
+        ),
+        followers,
+        React.createElement('br', null),
+        React.createElement(
+          'strong',
+          null,
+          'Stream Average FPS: '
+        ),
+        fps
+      ),
+      React.createElement('img', {
+        src: preview,
+        alt: user,
+        className: 'responsive-img'
+      })
+    ),
+    showLink()
+  );
+};
+var Menu = function Menu() {
+  return React.createElement(
+    'div', {
+      className: 'fixed-action-btn horizontal click-to-toggle',
+      style: {
+        bottom: 45,
+        right: 24
+      }
+    },
+    React.createElement(
+      'a', {
+        className: 'btn-floating btn-large red'
+      },
+      React.createElement(
+        'i', {
+          className: 'material-icons'
+        },
+        'menu'
+      )
+    ),
+    React.createElement(
+      'ul',
+      null,
+      React.createElement(
+        'li',
+        null,
+        React.createElement(
+          'a', {
+            className: 'btn-floating red'
+          },
+          React.createElement(
+            'i', {
+              className: 'material-icons'
+            },
+            'insert_chart'
+          )
+        )
+      ),
+      React.createElement(
+        'li',
+        null,
+        React.createElement(
+          'a', {
+            className: 'btn-floating yellow darken-1'
+          },
+          React.createElement(
+            'i', {
+              className: 'material-icons'
+            },
+            'format_quote'
+          )
+        )
+      ),
+      React.createElement(
+        'li',
+        null,
+        React.createElement(
+          'a', {
+            className: 'btn-floating green'
+          },
+          React.createElement(
+            'i', {
+              className: 'material-icons'
+            },
+            'publish'
+          )
+        )
+      ),
+      React.createElement(
+        'li',
+        null,
+        React.createElement(
+          'a', {
+            className: 'btn-floating blue'
+          },
+          React.createElement(
+            'i', {
+              className: 'material-icons'
+            },
+            'attach_file'
+          )
+        )
+      )
+    )
+  );
+};
+var SearchBar = function SearchBar(props) {
+  return React.createElement(
+    'div', {
+      className: 'row'
+    },
+    React.createElement(
+      'form', {
+        className: 'col s12',
+        action: 'action'
+      },
+      React.createElement(
+        'div', {
+          className: 'input-field col s12'
         },
         React.createElement(
           'i', {
-            className: 'material-icons'
+            className: 'material-icons prefix color-Ts'
           },
-          'menu'
+          'search'
+        ),
+        React.createElement('input', {
+          onChange: props.filterStreamers,
+          className: 'color-Ts',
+          id: 'search',
+          type: 'text',
+          name: 'search',
+          placeholder: 'Search for an account ...'
+        })
+      )
+    )
+  );
+};
+var Header = function Header() {
+  return React.createElement(
+    'header', {
+      className: 'page-header center-align'
+    },
+    React.createElement(
+      'nav',
+      null,
+      React.createElement(
+        'div', {
+          className: 'nav-wrapper color-Bp'
+        },
+        React.createElement(
+          'a', {
+            className: 'brand-logo center color-Ts'
+          },
+          'Twitch Status'
         )
+      )
+    )
+  );
+};
+var Footer = function Footer() {
+  return React.createElement(
+    'footer', {
+      className: 'page-footer center-align color-Bp'
+    },
+    React.createElement(FooterInfo, null),
+    React.createElement(FooterCopyright, null)
+  );
+};
+var FooterCopyright = function FooterCopyright() {
+  return React.createElement(
+    'div', {
+      className: 'footer-copyright'
+    },
+    React.createElement(
+      'div', {
+        className: 'container center-align'
+      },
+      'Copyright ©  ',
+      React.createElement(
+        'a', {
+          className: 'color-Ts',
+          href: 'http://rafase282.github.io/'
+        },
+        'Rafael J. Rodriguez'
       ),
+      '  2016. All Rights Reserved'
+    )
+  );
+};
+var FooterInfoButtons = function FooterInfoButtons() {
+  return React.createElement(
+    'div', {
+      className: 'col l4 offset-l2 s12'
+    },
+    React.createElement(
+      'h5', {
+        className: 'color-Ts'
+      },
+      'Follow Me!'
+    ),
+    React.createElement(
+      'div', {
+        className: 'col s6'
+      },
       React.createElement(
         'ul',
         null,
@@ -334,14 +535,14 @@ var Menu = React.createClass({
           null,
           React.createElement(
             'a', {
-              className: 'btn-floating red'
+              href: 'https://github.com/Rafase282',
+              target: '_blank'
             },
-            React.createElement(
-              'i', {
-                className: 'material-icons'
-              },
-              'insert_chart'
-            )
+            React.createElement('span', {
+              'data-position': 'left',
+              'data-tooltip': 'GitHub',
+              className: 'devicons devicons-github_badge color-Ts tooltipped'
+            })
           )
         ),
         React.createElement(
@@ -349,14 +550,14 @@ var Menu = React.createClass({
           null,
           React.createElement(
             'a', {
-              className: 'btn-floating yellow darken-1'
+              href: 'https://www.linkedin.com/in/rafase282',
+              target: '_blank'
             },
-            React.createElement(
-              'i', {
-                className: 'material-icons'
-              },
-              'format_quote'
-            )
+            React.createElement('i', {
+              'data-position': 'left',
+              'data-tooltip': 'LinkedIn',
+              className: 'mdi mdi-linkedin-box small color-Ts tooltipped'
+            })
           )
         ),
         React.createElement(
@@ -364,14 +565,14 @@ var Menu = React.createClass({
           null,
           React.createElement(
             'a', {
-              className: 'btn-floating green'
+              href: 'http://codepen.io/Rafase282',
+              target: '_blank'
             },
-            React.createElement(
-              'i', {
-                className: 'material-icons'
-              },
-              'publish'
-            )
+            React.createElement('span', {
+              'data-position': 'left',
+              'data-tooltip': 'Codepen',
+              className: 'devicons devicons-codepen color-Ts tooltipped'
+            })
           )
         ),
         React.createElement(
@@ -379,347 +580,126 @@ var Menu = React.createClass({
           null,
           React.createElement(
             'a', {
-              className: 'btn-floating blue'
+              href: 'https://www.youtube.com/c/rafaelrodriguez282',
+              target: '_blank'
             },
-            React.createElement(
-              'i', {
-                className: 'material-icons'
-              },
-              'attach_file'
-            )
+            React.createElement('i', {
+              'data-position': 'left',
+              'data-tooltip': 'YouTube',
+              className: 'mdi mdi-youtube-play small color-Ts tooltipped'
+            })
           )
         )
       )
-    );
-  }
-});
-var SearchBar = React.createClass({
-  displayName: 'SearchBar',
-
-  search: function search() {
-    if ($('#search').val().length > 0) {
-      $('.collection-item').css('display', 'none');
-      this.getFiltered();
-    } else {
-      $('.collection-item').css('display', 'block');
-    }
-    $('#search').unbind('keyup');
-    $('#search').keyup(this.search);
-  },
-  displayResults: function displayResults() {
-    var reg = new RegExp($('#search').val(), 'ig');
-    var accounts = this.props.accounts;
-    for (var key in users) {
-      var name = users[key];
-      if (reg.test(name)) {
-        console.log(reg, name, reg.test(name), '.' + name);
-        $('.' + name).css('display', 'block');
-      }
-    };
-  },
-  getFiltered: function getFiltered() {
-    var reg = new RegExp($('#search').val(), 'ig');
-    var names = this.props.accounts;
-    var filtered = names.filter(function(user) {
-      return reg.test(user);
-    });
-    this.props.setFilter(filtered);
-  },
-
-  componentDidMount: function componentDidMount() {
-    //$('#search').keyup(this.search);
-  },
-  render: function render() {
-    return React.createElement(
+    ),
+    React.createElement(
+      'div', {
+        className: 'col s6'
+      },
+      React.createElement(
+        'ul',
+        null,
+        React.createElement(
+          'li',
+          null,
+          React.createElement(
+            'a', {
+              href: 'https://medium.com/@Rafase282',
+              target: '_blank'
+            },
+            React.createElement('i', {
+              'data-position': 'left',
+              'data-tooltip': 'Medium',
+              className: 'mdi mdi-medium small color-Ts tooltipped'
+            })
+          )
+        ),
+        React.createElement(
+          'li',
+          null,
+          React.createElement(
+            'a', {
+              href: 'https://twitter.com/Rafase282',
+              target: '_blank'
+            },
+            React.createElement('i', {
+              'data-position': 'left',
+              'data-tooltip': 'Twitter',
+              className: 'mdi mdi-twitter small color-Ts tooltipped'
+            })
+          )
+        ),
+        React.createElement(
+          'li',
+          null,
+          React.createElement(
+            'a', {
+              href: 'http://www.freecodecamp.com/rafase282',
+              target: '_blank',
+              style: {
+                fontSize: '2em'
+              },
+              className: 'color-Ts'
+            },
+            '(',
+            React.createElement('i', {
+              'data-position': 'left',
+              'data-tooltip': 'Free Code Camp',
+              className: 'fa fa-fire fa-fw tooltipped'
+            }),
+            ')'
+          )
+        ),
+        React.createElement(
+          'li',
+          null,
+          React.createElement(
+            'a', {
+              href: 'https://www.twitch.tv/rafase282',
+              target: '_blank'
+            },
+            React.createElement('i', {
+              'data-position': 'left',
+              'data-tooltip': 'Twitch',
+              className: 'mdi mdi-twitch small color-Ts tooltipped'
+            })
+          )
+        )
+      )
+    )
+  );
+};
+var FooterInfo = function FooterInfo() {
+  return React.createElement(
+    'div', {
+      className: 'container'
+    },
+    React.createElement(
       'div', {
         className: 'row'
       },
       React.createElement(
-        'form', {
-          className: 'col s12',
-          action: 'action'
-        },
-        React.createElement(
-          'div', {
-            className: 'input-field col s12'
-          },
-          React.createElement(
-            'i', {
-              className: 'material-icons prefix color-Ts'
-            },
-            'search'
-          ),
-          React.createElement('input', {
-            onChange: this.getFiltered,
-            className: 'color-Ts',
-            id: 'search',
-            type: 'text',
-            name: 'search',
-            placeholder: 'Search for an account ...'
-          })
-        )
-      )
-    );
-  }
-});
-var Header = React.createClass({
-  displayName: 'Header',
-  render: function render() {
-    return React.createElement(
-      'header', {
-        className: 'page-header center-align'
-      },
-      React.createElement(
-        'nav',
-        null,
-        React.createElement(
-          'div', {
-            className: 'nav-wrapper color-Bp'
-          },
-          React.createElement(
-            'a', {
-              className: 'brand-logo center color-Ts'
-            },
-            'Twitch Status'
-          )
-        )
-      )
-    );
-  }
-});
-var Footer = React.createClass({
-  displayName: 'Footer',
-
-  render: function render() {
-    return React.createElement(
-      'footer', {
-        className: 'page-footer center-align color-Bp'
-      },
-      React.createElement(FooterInfo, null),
-      React.createElement(FooterCopyright, null)
-    );
-  }
-});
-var FooterCopyright = React.createClass({
-  displayName: 'FooterCopyright',
-
-  render: function render() {
-    return React.createElement(
-      'div', {
-        className: 'footer-copyright'
-      },
-      React.createElement(
         'div', {
-          className: 'container center-align'
+          className: 'col l6 s12'
         },
-        'Copyright ©  ',
         React.createElement(
-          'a', {
-            className: 'color-Ts',
-            href: 'http://rafase282.github.io/'
+          'h5', {
+            className: 'color-Ts'
           },
-          'Rafael J. Rodriguez'
+          'About the app'
         ),
-        '  2016. All Rights Reserved'
-      )
-    );
-  }
-});
-var FooterInfoButtons = React.createClass({
-  displayName: 'FooterInfoButtons',
-
-  render: function render() {
-    return React.createElement(
-      'div', {
-        className: 'col l4 offset-l2 s12'
-      },
-      React.createElement(
-        'h5', {
-          className: 'color-Ts'
-        },
-        'Follow Me!'
-      ),
-      React.createElement(
-        'div', {
-          className: 'col s6'
-        },
         React.createElement(
-          'ul',
-          null,
-          React.createElement(
-            'li',
-            null,
-            React.createElement(
-              'a', {
-                href: 'https://github.com/Rafase282',
-                target: '_blank'
-              },
-              React.createElement('span', {
-                'data-position': 'left',
-                'data-tooltip': 'GitHub',
-                className: 'devicons devicons-github_badge color-Ts tooltipped'
-              })
-            )
-          ),
-          React.createElement(
-            'li',
-            null,
-            React.createElement(
-              'a', {
-                href: 'https://www.linkedin.com/in/rafase282',
-                target: '_blank'
-              },
-              React.createElement('i', {
-                'data-position': 'left',
-                'data-tooltip': 'LinkedIn',
-                className: 'mdi mdi-linkedin-box small color-Ts tooltipped'
-              })
-            )
-          ),
-          React.createElement(
-            'li',
-            null,
-            React.createElement(
-              'a', {
-                href: 'http://codepen.io/Rafase282',
-                target: '_blank'
-              },
-              React.createElement('span', {
-                'data-position': 'left',
-                'data-tooltip': 'Codepen',
-                className: 'devicons devicons-codepen color-Ts tooltipped'
-              })
-            )
-          ),
-          React.createElement(
-            'li',
-            null,
-            React.createElement(
-              'a', {
-                href: 'https://www.youtube.com/c/rafaelrodriguez282',
-                target: '_blank'
-              },
-              React.createElement('i', {
-                'data-position': 'left',
-                'data-tooltip': 'YouTube',
-                className: 'mdi mdi-youtube-play small color-Ts tooltipped'
-              })
-            )
-          )
+          'p', {
+            className: 'color-Ts-light'
+          },
+          'The purpose of the app is to track your favorite streamers so you can see when they are online along with some basic statistics like the number of current views, followers, link to channels and preview of the current stream.',
+          React.createElement('br', null),
+          'If the user if offline or the account has been closed, it will let you know. You are able to add and remove accounts to keep track of.'
         )
       ),
-      React.createElement(
-        'div', {
-          className: 'col s6'
-        },
-        React.createElement(
-          'ul',
-          null,
-          React.createElement(
-            'li',
-            null,
-            React.createElement(
-              'a', {
-                href: 'https://medium.com/@Rafase282',
-                target: '_blank'
-              },
-              React.createElement('i', {
-                'data-position': 'left',
-                'data-tooltip': 'Medium',
-                className: 'mdi mdi-medium small color-Ts tooltipped'
-              })
-            )
-          ),
-          React.createElement(
-            'li',
-            null,
-            React.createElement(
-              'a', {
-                href: 'https://twitter.com/Rafase282',
-                target: '_blank'
-              },
-              React.createElement('i', {
-                'data-position': 'left',
-                'data-tooltip': 'Twitter',
-                className: 'mdi mdi-twitter small color-Ts tooltipped'
-              })
-            )
-          ),
-          React.createElement(
-            'li',
-            null,
-            React.createElement(
-              'a', {
-                href: 'http://www.freecodecamp.com/rafase282',
-                target: '_blank',
-                style: {
-                  fontSize: '2em'
-                },
-                className: 'color-Ts'
-              },
-              '(',
-              React.createElement('i', {
-                'data-position': 'left',
-                'data-tooltip': 'Free Code Camp',
-                className: 'fa fa-fire fa-fw tooltipped'
-              }),
-              ')'
-            )
-          ),
-          React.createElement(
-            'li',
-            null,
-            React.createElement(
-              'a', {
-                href: 'https://www.twitch.tv/rafase282',
-                target: '_blank'
-              },
-              React.createElement('i', {
-                'data-position': 'left',
-                'data-tooltip': 'Twitch',
-                className: 'mdi mdi-twitch small color-Ts tooltipped'
-              })
-            )
-          )
-        )
-      )
-    );
-  }
-});
-var FooterInfo = React.createClass({
-  displayName: 'FooterInfo',
+      React.createElement(FooterInfoButtons, null)
+    )
+  );
+};
 
-  render: function render() {
-    return React.createElement(
-      'div', {
-        className: 'container'
-      },
-      React.createElement(
-        'div', {
-          className: 'row'
-        },
-        React.createElement(
-          'div', {
-            className: 'col l6 s12'
-          },
-          React.createElement(
-            'h5', {
-              className: 'color-Ts'
-            },
-            'About the app'
-          ),
-          React.createElement(
-            'p', {
-              className: 'color-Ts-light'
-            },
-            'The purpose of the app is to track your favorite streamers so you can see when they are online along with some basic statistics like the number of current views, followers, link to channels and preview of the current stream.',
-            React.createElement('br', null),
-            'If the user if offline or the account has been closed, it will let you know. You are able to add and remove accounts to keep track of.'
-          )
-        ),
-        React.createElement(FooterInfoButtons, null)
-      )
-    );
-  }
-});
-ReactDOM.render(React.createElement(App, null), document.getElementById('content'));
+ReactDOM.render(React.createElement(App, null), document.querySelector('#content'));
