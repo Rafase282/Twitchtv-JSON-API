@@ -172,8 +172,6 @@ var App = function(_React$Component) {
     this.setState({
       filteredStreamersPayloads: updatedPayloadsList
     });
-    console.log('updated: ', updated);
-    console.log('updatedPayloadsList: ', updatedPayloadsList);
   };
 
   App.prototype.render = function render() {
@@ -335,7 +333,6 @@ var UserCard = function UserCard(props) {
       ),
       React.createElement('img', {
         src: preview,
-        alt: user,
         className: 'responsive-img'
       })
     ),
@@ -454,7 +451,7 @@ var SearchBar = function SearchBar(props) {
           id: 'search',
           type: 'text',
           name: 'search',
-          placeholder: 'Search for an account ...'
+          placeholder: 'Search for streamers'
         })
       )
     )

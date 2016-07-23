@@ -123,8 +123,6 @@ class App extends React.Component {
 		this.setState({
 			filteredStreamersPayloads: updatedPayloadsList
 		});
-		console.log('updated: ', updated);
-		console.log('updatedPayloadsList: ', updatedPayloadsList);
 	}
   render() {
     return <section className='container-fluid'>
@@ -189,7 +187,7 @@ const UserCard = (props) => {
             <strong>Stream Average FPS: </strong>
             {fps}
           </p>
-          <img src={preview} alt={user} className='responsive-img'/>
+          <img src={preview} className='responsive-img'/>
         </div>
         {showLink()}
       </li>
@@ -235,7 +233,7 @@ const SearchBar = (props) => {
         <form className='col s12' action='action'>
           <div className='input-field col s12'>
             <i className='material-icons prefix color-Ts'>search</i>
-            <input onChange={props.filterStreamers} className='color-Ts' id='search' type='text' name='search' placeholder='Search for an account ...'/>
+            <input onChange={props.filterStreamers} className='color-Ts' id='search' type='text' name='search' placeholder='Search for streamers'/>
           </div>
         </form>
       </div>
