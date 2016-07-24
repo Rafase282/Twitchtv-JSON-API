@@ -2,7 +2,63 @@ class App extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-			streamers: [
+			streamers: this.getStreamers(),
+      defaultLogo: 'https://s-media-cache-ak0.pinimg.com/236x/1b/d0/eb/1bd0eb3468a132c2f8d02a56435ebd1e.jpg',
+      filteredStreamersPayloads: [],
+			allStreamersPayloads: []
+		}
+  }
+  componentWillMount() {
+    let accList = JSON.parse(localStorage.getItem('Rafase282_TwitchApp'));
+    if (accList) {
+      this.setState({streamers: accList})
+    }
+  }
+  componentDidMount() {
+    let streamers = this.state.streamers;
+    let logo = this.state.defaultLogo;
+    let update = this;
+		streamers.forEach((streamer) => {
+			this.getStreamerFullData(streamer);
+		});
+    // Modal settings for bringing up edit section
+    $('.modal-trigger').leanModal({
+      dismissible: false, // Modal can be dismissed by clicking outside of the modal
+      opacity: .5, // Opacity of modal background
+      in_duration: 300, // Transition in duration
+      out_duration: 200, // Transition out duration
+      starting_top: '5%', // Starting top style attribute
+      ending_top: '10%', // Ending top style attribute
+      //complete: ()=> {} // Callback for Modal close
+    });
+    
+    // Section about the chips
+    $('.chips').on('chip.add', function(e, chip){
+      streamers.push(chip.tag);
+      update.setState({streamers: streamers});
+    });
+    
+    $('.chips').on('chip.delete', function(e, chip){
+    // you have the deleted chip here
+      streamers.splice(chip.id, 1);
+      update.setState({streamers: streamers});
+    });
+    
+    $('.chips-initial').material_chip({
+      data: streamers.map((streamer, index) => {
+        return {
+          tag: streamer,
+          image: logo,
+          id: index
+        };
+      })
+    });
+	}
+  componentDidUpdate(prevProps, nextProps) {
+    localStorage.setItem('Rafase282_TwitchApp', JSON.stringify(this.state.streamers));
+  }
+  getStreamers() {
+    return [
         'freecodecamp',
         'storbeck',
         'terakilobyte',
@@ -20,24 +76,11 @@ class App extends React.Component {
         'kairi78_officiel',
         'rafase282s',
         'esl_sc2'
-      ],
-      filteredStreamersPayloads: [],
-			allStreamersPayloads: []
-		}
+      ]
   }
-  componentWillMount() {
-    let accList = JSON.parse(localStorage.getItem('Rafase282_TwitchApp'));
-    if (accList) {
-      this.setState({streamers: accList})
-    }
-  }
-  componentDidMount() {
-		this.state.streamers.forEach((streamer) => {
-			this.getStreamerFullData(streamer);
-		});
-	}
-  componentDidUpdate(prevProps, nextProps) {
-    localStorage.setItem('Rafase282_TwitchApp', JSON.stringify(this.state.streamers));
+  clearLocalStorage(props) {
+    localStorage.removeItem('Rafase282_TwitchApp');
+    this.setState({streamers: this.getStreamers()});
   }
   getUserData(streamer){
     return axios.get('https://api.twitch.tv/kraken/users/' + streamer)
@@ -66,7 +109,7 @@ class App extends React.Component {
       fps = msg;
     };
     user = userData.display_name || streamData.message.split("'")[1];
-    logo = userData.logo ? userData.logo: 'https://s-media-cache-ak0.pinimg.com/236x/1b/d0/eb/1bd0eb3468a132c2f8d02a56435ebd1e.jpg';
+    logo = userData.logo ? userData.logo: this.state.defaultLogo;
     bio = userData.bio ? userData.bio: 'No Bio available.';
     
     if (streamData.stream == null){
@@ -140,7 +183,19 @@ class App extends React.Component {
             </div>
           </div>
         </div>
-        <Menu/>
+        <Menu onClickReset={this.clearLocalStorage.bind(this)}/>
+        <div id='editstreamers' className='modal bottom-sheet'>
+          <div className='modal-content'>
+            <h4>Edit Streamers List</h4>
+            <p>Type an username to add a new streamer.</p>
+            <div className='chips chips-initial' onChange={this.forceUpdate}>
+              <input className='input' placeholder=''/>
+            </div>
+          </div>
+          <div className='modal-footer'>
+            <a className='modal-action modal-close waves-effect waves-green btn-flat'>Close</a>
+          </div>
+        </div>
       </main>
       <Footer/>
     </section>;
@@ -197,7 +252,7 @@ const UserCard = (props) => {
       </li>
     )
 }
-const Menu = () => {
+const Menu = (props) => {
     return (
       <div className='fixed-action-btn horizontal click-to-toggle' style={{
         bottom: 45,
@@ -208,23 +263,13 @@ const Menu = () => {
         </a>
         <ul>
           <li>
-            <a className='btn-floating red'>
-              <i className='material-icons'>insert_chart</i>
+            <a className='btn-floating red modal-trigger' href='#editstreamers'>
+              <i data-position='top' data-tooltip='Edit streamers list' className='material-icons tooltipped'>edit</i>
             </a>
           </li>
           <li>
-            <a className='btn-floating yellow darken-1'>
-              <i className='material-icons'>format_quote</i>
-            </a>
-          </li>
-          <li>
-            <a className='btn-floating green'>
-              <i className='material-icons'>publish</i>
-            </a>
-          </li>
-          <li>
-            <a className='btn-floating blue'>
-              <i className='material-icons'>attach_file</i>
+            <a className='btn-floating yellow darken-1' onClick={props.onClickReset}>
+              <i data-position='top' data-tooltip='Restore Default to Users' className='material-icons tooltipped'>settings_backup_restore</i>
             </a>
           </li>
         </ul>
@@ -234,12 +279,10 @@ const Menu = () => {
 const SearchBar = (props) => {
     return (
       <div className='row'>
-        <form className='col s12' action='action'>
           <div className='input-field col s12'>
             <i className='material-icons prefix color-Ts'>search</i>
             <input onChange={props.filterStreamers} className='color-Ts' id='search' type='text' name='search' placeholder='Search for streamers'/>
           </div>
-        </form>
       </div>
     );
 }
