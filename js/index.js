@@ -102,19 +102,24 @@ var App = function(_React$Component) {
       followers = msg;
       fps = msg;
     };
-    switch (streamData.status) {
-      case 404:
-        status = streamData.message;
-        setOffline(streamData.message);
-        break;
-      case 422:
-        status = 'Account Closed!';
-        setOffline(streamData.message);
-        break;
-    }
     user = userData.display_name || streamData.message.split("'")[1];
     logo = userData.logo ? userData.logo : 'https://s-media-cache-ak0.pinimg.com/236x/1b/d0/eb/1bd0eb3468a132c2f8d02a56435ebd1e.jpg';
     bio = userData.bio ? userData.bio : 'No Bio available.';
+
+    if (streamData.stream == null) {
+      status = 'Offline!';
+      setOffline('Only Available when online.');
+    };
+
+    if (streamData.status == 404) {
+      status = streamData.message;
+      setOffline(streamData.message);
+    };
+    if (streamData.status == 422) {
+      status = 'Account Closed!';
+      setOffline(streamData.message);
+    };
+
     if (streamData.stream) {
       status = streamData.stream.channel.status;
       url = streamData.stream.channel.url;
@@ -123,10 +128,8 @@ var App = function(_React$Component) {
       preview = streamData.stream.preview.large;
       followers = numeral(streamData.stream.channel.followers).format('0,0');
       fps = numeral(streamData.stream.average_fps).format('0.00');
-    } else {
-      status = 'Offline!';
-      setOffline('Only Available when online.');
-    }
+    };
+
     return {
       user: user,
       logo: logo,
@@ -159,10 +162,10 @@ var App = function(_React$Component) {
   };
 
   App.prototype.filterStreamers = function filterStreamers(event) {
-    var updated = this.state.streamers.filter(function(item) {
-      return item.toLowerCase().search(event.target.value.toLowerCase()) !== -1;
-    }).map(function(item) {
+    var updated = this.state.streamers.map(function(item) {
       return item.toLowerCase();
+    }).filter(function(item) {
+      return item.search(event.target.value.toLowerCase()) !== -1;
     });
 
     var updatedPayloadsList = this.state.allStreamersPayloads.filter(function(payload) {
