@@ -2,25 +2,27 @@ class App extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-			streamers: this.getStreamers(),
+      streamers: this.getStreamers(),
       defaultLogo: 'https://s-media-cache-ak0.pinimg.com/236x/1b/d0/eb/1bd0eb3468a132c2f8d02a56435ebd1e.jpg',
       filteredStreamersPayloads: [],
-			allStreamersPayloads: []
-		}
+      allStreamersPayloads: []
+    }
   }
   componentWillMount() {
     let accList = JSON.parse(localStorage.getItem('Rafase282_TwitchApp'));
     if (accList) {
-      this.setState({streamers: accList})
+      this.setState({
+        streamers: accList
+      })
     }
   }
   componentDidMount() {
     let streamers = this.state.streamers;
     let logo = this.state.defaultLogo;
     let update = this;
-		streamers.forEach((streamer) => {
-			this.getStreamerFullData(streamer);
-		});
+    streamers.forEach((streamer) => {
+      this.getStreamerFullData(streamer);
+    });
     // Modal settings for bringing up edit section
     $('.modal-trigger').leanModal({
       dismissible: false, // Modal can be dismissed by clicking outside of the modal
@@ -31,77 +33,62 @@ class App extends React.Component {
       ending_top: '10%', // Ending top style attribute
       //complete: ()=> {} // Callback for Modal close
     });
-    
-    // Section about the chips
-    $('.chips').on('chip.add', function(e, chip){
-      streamers.push(chip.tag);
-      update.setState({streamers: streamers});
-    });
-    
-    $('.chips').on('chip.delete', function(e, chip){
-    // you have the deleted chip here
-      streamers.splice(chip.id, 1);
-      update.setState({streamers: streamers});
-    });
-    
-    $('.chips-initial').material_chip({
-      data: streamers.map((streamer, index) => {
-        return {
-          tag: streamer,
-          image: logo,
-          id: index
-        };
-      })
-    });
-	}
+  }
   componentDidUpdate(prevProps, nextProps) {
     localStorage.setItem('Rafase282_TwitchApp', JSON.stringify(this.state.streamers));
   }
   getStreamers() {
     return [
-        'freecodecamp',
-        'storbeck',
-        'terakilobyte',
-        'habathcx',
-        'RobotCaleb',
-        'thomasballinger',
-        'noobs2ninjas',
-        'beohoff',
-        'MedryBW',
-        'brunofin',
-        'comster404',
-        'quill18',
-        'rafase282',
-        'darkness_429',
-        'kairi78_officiel',
-        'rafase282s',
-        'esl_sc2'
-      ]
+      'freecodecamp',
+      'storbeck',
+      'terakilobyte',
+      'habathcx',
+      'RobotCaleb',
+      'thomasballinger',
+      'noobs2ninjas',
+      'beohoff',
+      'MedryBW',
+      'brunofin',
+      'comster404',
+      'quill18',
+      'rafase282',
+      'darkness_429',
+      'kairi78_officiel',
+      'rafase282s',
+      'esl_sc2'
+    ]
   }
   clearLocalStorage(props) {
     localStorage.removeItem('Rafase282_TwitchApp');
-    this.setState({streamers: this.getStreamers()});
+    this.setState({
+      streamers: this.getStreamers(),
+      filteredStreamersPayloads: this.state.filteredStreamersPayloads.slice(0, 17),
+      allStreamersPayloads: this.state.allStreamersPayloads.slice(0, 17)
+    });
   }
-  getUserData(streamer){
+  getUserData(streamer) {
     return axios.get('https://api.twitch.tv/kraken/users/' + streamer)
-      .catch(function (error) {
-    if (error.response) {
-      return error.response;
-    }
-  });
-
+      .catch(function(error) {
+        if (error.response) {
+          return error.response;
+        }
+      });
   }
-  getStreamData(streamer){
+  getStreamData(streamer) {
     return axios.get('https://api.twitch.tv/kraken/streams/' + streamer)
-      .catch(function (error) {
-    if (error.response) {
-      return error.response;
-    }
-  });
+      .catch(function(error) {
+        if (error.response) {
+          return error.response;
+        }
+      });
   }
-  constructPayloadForStreamer(data){
-    const {streamData, userData} = data;
+  constructPayloadForStreamer(data) {
+    const {
+      streamData,
+      userData
+    } = data;
     let user, logo, bio, status, url, viewers, game, preview, followers, fps;
+
     function setOffline(msg) {
       viewers = msg;
       game = msg;
@@ -109,24 +96,24 @@ class App extends React.Component {
       fps = msg;
     };
     user = userData.display_name || streamData.message.split("'")[1];
-    logo = userData.logo ? userData.logo: this.state.defaultLogo;
-    bio = userData.bio ? userData.bio: 'No Bio available.';
-    
-    if (streamData.stream == null){
+    logo = userData.logo ? userData.logo : this.state.defaultLogo;
+    bio = userData.bio ? userData.bio : 'No Bio available.';
+
+    if (streamData.stream == null) {
       status = 'Offline!';
       setOffline('Only Available when online.');
     };
-    
-    if (streamData.status == 404){
+
+    if (streamData.status == 404) {
       status = streamData.message;
       setOffline(streamData.message)
     };
-    if (streamData.status == 422){
+    if (streamData.status == 422) {
       status = 'Account Closed!';
       setOffline(streamData.message);
     };
-    
-    if(streamData.stream){
+
+    if (streamData.stream) {
       status = streamData.stream.channel.status;
       url = streamData.stream.channel.url;
       viewers = numeral(streamData.stream.viewers).format('0,0');
@@ -135,42 +122,71 @@ class App extends React.Component {
       followers = numeral(streamData.stream.channel.followers).format('0,0');
       fps = numeral(streamData.stream.average_fps).format('0.00');
     };
-    
-    
+
     return {
-      user, logo, bio, status, url, viewers, game, preview, followers, fps
+      user,
+      logo,
+      bio,
+      status,
+      url,
+      viewers,
+      game,
+      preview,
+      followers,
+      fps
     }
   }
   getStreamerFullData(streamer) {
-		return axios.all([this.getStreamData(streamer), this.getUserData(streamer)])
-			.then(axios.spread((stream, user) => {
-				return {
+    return axios.all([this.getStreamData(streamer), this.getUserData(streamer)])
+      .then(axios.spread((stream, user) => {
+        return {
           streamData: stream.data,
           userData: user.data
         }
-			}))
-			.then((data) => this.constructPayloadForStreamer(data))
-			.then((payload) => {
-				this.state.allStreamersPayloads.push(payload);
-				this.state.filteredStreamersPayloads.push(payload);
-				this.forceUpdate();
-		  })
-	}
+      }))
+      .then((data) => this.constructPayloadForStreamer(data))
+      .then((payload) => {
+        this.setState({
+          allStreamersPayloads: [...this.state.allStreamersPayloads, payload],
+          filteredStreamersPayloads: [...this.state.filteredStreamersPayloads, payload],
+
+        });
+      })
+  }
   filterStreamers(event) {
-		const updated = this.state.streamers
-        .map((item) => item.toLowerCase())
-        .filter((item) => {
+    const updated = this.state.streamers
+      .map((item) => item.toLowerCase())
+      .filter((item) => {
         return item.search(event.target.value.toLowerCase()) !== -1;
       });
-		
-		const updatedPayloadsList = this.state.allStreamersPayloads.filter((payload) => {
-			return updated.indexOf(payload.user.toLowerCase()) !== -1;
-		});
-		
-		this.setState({
-			filteredStreamersPayloads: updatedPayloadsList
-		});
-	}
+
+    const updatedPayloadsList = this.state.allStreamersPayloads.filter((payload) => {
+      return updated.indexOf(payload.user.toLowerCase()) !== -1;
+    });
+
+    this.setState({
+      filteredStreamersPayloads: updatedPayloadsList
+    });
+  }
+  updateStreamers(newStreamer) {
+    this.setState({
+      streamers: [...this.state.streamers, newStreamer]
+    });
+
+  }
+  removeStreamer(streamer) {
+    const streamers = this.state.streamers
+      .map(s => s.toLowerCase())
+      .filter(s => s !== streamer.toLowerCase());
+    const filteredStreamersPayloads = this.state.allStreamersPayloads.filter((payload) => {
+      return streamers.indexOf(payload.user.toLowerCase()) !== -1;
+    });
+
+    this.setState({
+      streamers,
+      filteredStreamersPayloads
+    });
+  }
   render() {
     return <section className='container-fluid'>
       <Header/>
@@ -184,36 +200,45 @@ class App extends React.Component {
           </div>
         </div>
         <Menu onClickReset={this.clearLocalStorage.bind(this)}/>
-        <div id='editstreamers' className='modal bottom-sheet'>
-          <div className='modal-content'>
-            <h4>Edit Streamers List</h4>
-            <p>Type an username to add a new streamer.</p>
-            <div className='chips chips-initial' onChange={this.forceUpdate}>
-              <input className='input' placeholder=''/>
-            </div>
-          </div>
-          <div className='modal-footer'>
-            <a className='modal-action modal-close waves-effect waves-green btn-flat'>Close</a>
-          </div>
-        </div>
+        <AllChips  getStreamerFullData={this.getStreamerFullData.bind(this)} updateStreamers={this.updateStreamers.bind(this)} chips={this.state.streamers} logo={this.state.defaultLogo} removeChip={this.removeStreamer.bind(this)}/>
       </main>
       <Footer/>
     </section>;
   }
 }
-
+const SearchBar = (props) => {
+  return (
+    <div className='row'>
+          <div className='input-field col s12'>
+            <i className='material-icons prefix color-Ts'>search</i>
+            <input onChange={props.filterStreamers} className='color-Ts' id='search' type='text' name='search' placeholder='Search for streamers'/>
+          </div>
+      </div>
+  );
+}
 const FilteredList = (props) => {
-	return (
-			<ul className='collection collapsible popout' data-collapsible='accordion'>
+  return (
+    <ul className='collection collapsible popout' data-collapsible='accordion'>
 				{ props.filteredStreamersPayloads.map((payload, i) => {
 		        return <UserCard key={i} payload={payload} /> })
 				}
 			</ul>
-		)
+  )
 }
 const UserCard = (props) => {
-    const {user, logo, bio, status, url, viewers, game, preview, followers, fps } = props.payload;
-  const showLink = ()=>{
+  const {
+    user,
+    logo,
+    bio,
+    status,
+    url,
+    viewers,
+    game,
+    preview,
+    followers,
+    fps
+  } = props.payload;
+  const showLink = () => {
     if (url) {
       return (
         <a href={url} target='_blank' className='secondary-content'>
@@ -222,8 +247,8 @@ const UserCard = (props) => {
       )
     }
   }
-    return (
-      <li className='collection-item avatar color-Bsd color-Tp'>
+  return (
+    <li className='collection-item avatar color-Bsd color-Tp'>
         <div className='collapsible-header'>
           <span className='title'>
             <img src={logo} alt={user} className='circle'/> {user}
@@ -250,69 +275,111 @@ const UserCard = (props) => {
         </div>
         {showLink()}
       </li>
+  )
+}
+class AllChips extends React.Component {
+  handleInputValue() {
+    const toDelete = this.refs.chipe;
+    console.log(toDelete);
+  }
+  handleAddingChip() {
+    const toAdd = this.refs.chipInput.value;
+    if(!toAdd) {
+      console.warn('Type username to add streamer!');
+      return;
+    }
+    else {
+      this.props.updateStreamers(toAdd);
+      this.props.getStreamerFullData(toAdd);
+      this.refs.chipInput.value = '';
+    }
+  }
+  handleRemovingChip(streamer) {
+    this.props.removeChip(streamer);
+  }
+  render() {
+    const chips = this.props.chips.map((chip, i) => {
+      return <Chip name={chip} key={i} id={i} logo={this.props.logo} removeChip={this.handleRemovingChip.bind(this)}/>
+    })
+    return (
+      <div id='editstreamers' className='modal bottom-sheet'>
+          <div className='modal-content'>
+            <h4>Edit Streamers List</h4>
+            <p>Type an username to add a new streamer.</p>
+            
+            <div className="chips">
+       {chips}
+       <input onChange={this.handleInputValue.bind(this)} ref="chipInput" className='input' placeholder=''/>
+    </div>
+            
+          </div>
+          <div className='modal-footer'>
+            <button onClick={this.handleAddingChip.bind(this)}> Add Streamer</button>
+            <a className='modal-action modal-close waves-effect waves-green btn-flat'>Close</a>
+          </div>
+        </div>
     )
+
+  }
+}
+const Chip = (props) => {
+  return (
+    <div className="chip">
+    <img src={props.logo} alt={props.name}/>
+    {props.name}
+    <i className="close material-icons" onClick={()=>props.removeChip(props.name)}>close</i>
+  </div>
+  )
 }
 const Menu = (props) => {
-    return (
-      <div className='fixed-action-btn horizontal click-to-toggle' style={{
-        bottom: 45,
-        right: 24
-      }}>
-        <a className='btn-floating btn-large red'>
-          <i className='material-icons'>menu</i>
-        </a>
-        <ul>
-          <li>
-            <a className='btn-floating red modal-trigger' href='#editstreamers'>
-              <i data-position='top' data-tooltip='Edit streamers list' className='material-icons tooltipped'>edit</i>
-            </a>
-          </li>
-          <li>
-            <a className='btn-floating yellow darken-1' onClick={props.onClickReset}>
-              <i data-position='top' data-tooltip='Restore Default to Users' className='material-icons tooltipped'>settings_backup_restore</i>
-            </a>
-          </li>
-        </ul>
-      </div>
-    );
-}
-const SearchBar = (props) => {
-    return (
-      <div className='row'>
-          <div className='input-field col s12'>
-            <i className='material-icons prefix color-Ts'>search</i>
-            <input onChange={props.filterStreamers} className='color-Ts' id='search' type='text' name='search' placeholder='Search for streamers'/>
-          </div>
-      </div>
-    );
+  return (
+    <div className = 'fixed-action-btn horizontal click-to-toggle'
+    style = {{bottom: 45, right: 24}}>
+      <a className='btn-floating btn-large red'>
+        <i className='material-icons'>menu</i>
+      </a>
+      <ul>
+        <li>
+          <a className='btn-floating red modal-trigger' href='#editstreamers'>
+            <i data-position='top' data-tooltip='Edit streamers list' className='material-icons tooltipped'>edit</i>
+          </a>
+        </li>
+        <li >
+          <a className='btn-floating yellow darken-1' onClick={props.onClickReset}>
+            <i data-position='top' data-tooltip='Restore Default to Users' className='material-icons tooltipped'>settings_backup_restore</i>
+          </a>
+        </li>
+      </ul>
+    </div>
+  )
 }
 const Header = () => {
-    return <header className='page-header center-align'>
+  return (<header className='page-header center-align'>
       <nav>
         <div className='nav-wrapper color-Bp'>
           <a className='brand-logo center color-Ts'>Twitch Status</a>
         </div>
       </nav>
-    </header>
+    </header>)
 }
 const Footer = () => {
-    return <footer className='page-footer center-align color-Bp'>
+  return (<footer className='page-footer center-align color-Bp'>
       <FooterInfo/>
       <FooterCopyright/>
-    </footer>
+    </footer>)
 }
 const FooterCopyright = () => {
-    return <div className='footer-copyright'>
+  return (<div className='footer-copyright'>
       <div className='container center-align'>
         Copyright &copy; &nbsp;
         <a className='color-Ts' href='http://rafase282.github.io/'>Rafael J. Rodriguez</a>
         &nbsp; 2016. All Rights Reserved
       </div>
-    </div>
+    </div>)
 }
 const FooterInfoButtons = () => {
-    return (
-      <div className='col l4 offset-l2 s12'>
+  return (
+    <div className='col l4 offset-l2 s12'>
         <h5 className='color-Ts'>Follow Me!</h5>
         <div className='col s6'>
           <ul>
@@ -357,11 +424,11 @@ const FooterInfoButtons = () => {
           </ul>
         </div>
       </div>
-    )
+  )
 }
 const FooterInfo = () => {
-    return (
-      <div className='container'>
+  return (
+    <div className='container'>
         <div className='row'>
           <div className='col l6 s12'>
             <h5 className='color-Ts'>About the app</h5>
@@ -373,10 +440,10 @@ const FooterInfo = () => {
           <FooterInfoButtons/>
         </div>
       </div>
-    );
+  );
 };
 
 ReactDOM.render(
-	<App />,
-	document.querySelector('#content')
+  <App />,
+  document.querySelector('#root')
 )
