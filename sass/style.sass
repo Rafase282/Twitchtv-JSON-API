@@ -1,61 +1,63 @@
 section
+  display: -webkit-box
+  display: -webkit-flex
+  display: -ms-flexbox
   display: flex
   min-height: 100vh
+  -webkit-box-orient: vertical
+  -webkit-box-direction: normal
+  -webkit-flex-direction: column
+  -ms-flex-direction: column
   flex-direction: column
 
 main
+  -webkit-box-flex: 1
+  -webkit-flex: 1 0 auto
+  -ms-flex: 1 0 auto
   flex: 1 0 auto
-  
+
 .devicons
   font-size: 2.3em
-  
+
 .board
   border-style: solid
   margin: 10%
   padding: 10%
-  
+
 /* Color variables
  * Use these variables with the
  * color classes.
-/*
 
-$color-primary: #0d47a1
-$color-primary-light: #ff1744
-$color-secondary: #fff
-$color-secondary-dark: #212121
-$color-secondary-light: #B6B6B6
-$font-stack: Titillium Web, Roboto
-
-
-/* Color Scheme
+ * Color Scheme
  * Use these classes for giving color
-/*
+ */
 
-//Color-Background-Primary
-.color-Bp,
-.color-Bp:hover,
-.color-Bp:active
-  background-color: $color-primary !important
+.color-Bp
+  background-color: #0d47a1 !important
+  &:hover, &:active
+    background-color: #0d47a1 !important
 
-//Color-Background-Primary-Light
-.color-Bp-light,
-.color-Bp-light:hover,
-.color-Bp-light:active 
-  background-color: $color-primary-light !important
+.color-Bp-light
+  background-color: #ff1744 !important
+  &:hover, &:active
+    background-color: #ff1744 !important
 
-//Color-Background-Secondary
-.color-Bsd,
-.color-Bsd:hover,
-.color-Bsd:active
-  background-color: $color-secondary !important
-    
+.color-Bsd
+  background-color: #fff !important
+  &:hover, &:active
+    background-color: #fff !important
+
 .color-Tp
-  color: $color-primary !important
+  color: #0d47a1 !important
+
 .color-Ts
-  color: $color-secondary !important
+  color: #fff !important
+
 .color-Ts-dark
-  color: $color-secondary-dark !important
+  color: #212121 !important
+
 .color-Ts-light
-  color: $color-secondary-light !important
+  color: #B6B6B6 !important
+
 .color-Tp-light
-  color: $color-primary-light !important
+  color: #ff1744 !important
