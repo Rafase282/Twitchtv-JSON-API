@@ -346,16 +346,15 @@ class AllChips extends React.Component {
     return (
       <div id='editstreamers' className='modal bottom-sheet'>
         <div className='modal-content'>
-          <h4>Edit Streamers List</h4>
-          <p>Type an username to add a new streamer.</p>
+          <h4 className='center-align color-Tp'>Edit the Streamers List</h4>
+          <p className='color-Tp-light'>Type an username to add a new streamer or click on the <i className="close material-icons" >close</i> to delete an existing one.</p>
           <div className="chips">
             {chips}
-            <input onChange={this.handleInputValue.bind(this)} ref="chipInput" className='input' placeholder=''/>
+            <input onChange={this.handleInputValue.bind(this)} ref="chipInput" className='color-Tp center-align' id='chipsInput' type='text' name='chipsInput' placeholder='Type here to add more streamers'/>
           </div>
-            
         </div>
         <div className='modal-footer'>
-          <button onClick={this.handleAddingChip.bind(this)}> Add Streamer</button>
+          <button className='btn color-Bp' onClick={this.handleAddingChip.bind(this)}> Add Streamer</button>
           <a className='modal-action modal-close waves-effect waves-green btn-flat'>Close</a>
         </div>
       </div>
@@ -364,10 +363,10 @@ class AllChips extends React.Component {
 };
 const Chip = (props) => {
   return (
-    <div className="chip">
+    <div className="chip color-Bp color-Ts-light">
       <img src={props.logo} alt={props.name}/>
       {props.name}
-      <i className="close material-icons" onClick={()=>props.removeChip(props.name)}>close</i>
+      <i className="close material-icons color-Tp-light" onClick={()=>props.removeChip(props.name)}>close</i>
     </div>
   )
 };

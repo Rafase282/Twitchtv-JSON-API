@@ -570,14 +570,23 @@ var AllChips = function(_React$Component2) {
           className: 'modal-content'
         },
         React.createElement(
-          'h4',
-          null,
-          'Edit Streamers List'
+          'h4', {
+            className: 'center-align color-Tp'
+          },
+          'Edit the Streamers List'
         ),
         React.createElement(
-          'p',
-          null,
-          'Type an username to add a new streamer.'
+          'p', {
+            className: 'color-Tp-light'
+          },
+          'Type an username to add a new streamer or click on the ',
+          React.createElement(
+            'i', {
+              className: 'close material-icons'
+            },
+            'close'
+          ),
+          ' to delete an existing one.'
         ),
         React.createElement(
           'div', {
@@ -587,8 +596,11 @@ var AllChips = function(_React$Component2) {
           React.createElement('input', {
             onChange: this.handleInputValue.bind(this),
             ref: 'chipInput',
-            className: 'input',
-            placeholder: ''
+            className: 'color-Tp center-align',
+            id: 'chipsInput',
+            type: 'text',
+            name: 'chipsInput',
+            placeholder: 'Type here to add more streamers'
           })
         )
       ),
@@ -598,6 +610,7 @@ var AllChips = function(_React$Component2) {
         },
         React.createElement(
           'button', {
+            className: 'btn color-Bp',
             onClick: this.handleAddingChip.bind(this)
           },
           ' Add Streamer'
@@ -619,7 +632,7 @@ var AllChips = function(_React$Component2) {
 var Chip = function Chip(props) {
   return React.createElement(
     'div', {
-      className: 'chip'
+      className: 'chip color-Bp color-Ts-light'
     },
     React.createElement('img', {
       src: props.logo,
@@ -628,7 +641,7 @@ var Chip = function Chip(props) {
     props.name,
     React.createElement(
       'i', {
-        className: 'close material-icons',
+        className: 'close material-icons color-Tp-light',
         onClick: function onClick() {
           return props.removeChip(props.name);
         }

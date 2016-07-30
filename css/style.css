@@ -32,6 +32,15 @@ main {
   display: block;
 }
 
+.chips {
+  border-bottom: none;
+}
+
+#chipsInput {
+  font-weight: bold;
+  font-size: 2em;
+}
+
 a.active {
   border-style: solid none solid none;
 }
