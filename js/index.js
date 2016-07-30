@@ -28,11 +28,11 @@ function _inherits(subClass, superClass) {
   if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass;
 }
 
-var App = function(_React$Component) {
-  _inherits(App, _React$Component);
+var TwitchApp = function(_React$Component) {
+  _inherits(TwitchApp, _React$Component);
 
-  function App(props) {
-    _classCallCheck(this, App);
+  function TwitchApp(props) {
+    _classCallCheck(this, TwitchApp);
 
     var accList = JSON.parse(localStorage.getItem('Rafase282_TwitchApp'));
 
@@ -48,38 +48,7 @@ var App = function(_React$Component) {
     return _this;
   }
 
-  App.prototype.componentDidMount = function componentDidMount() {
-    var _this2 = this;
-
-    var streamers = this.state.streamers;
-    var logo = this.state.defaultLogo;
-    var update = this;
-    streamers.forEach(function(streamer) {
-      _this2.getStreamerFullData(streamer);
-    });
-    // Modal settings for bringing up edit section
-    $('.modal-trigger').leanModal({
-      dismissible: false, // Modal can be dismissed by clicking outside of the modal
-      opacity: .5, // Opacity of modal background
-      in_duration: 300, // Transition in duration
-      out_duration: 200, // Transition out duration
-      starting_top: '5%', // Starting top style attribute
-      ending_top: '10%'
-    });
-  };
-
-  // Ending top style attribute
-  //complete: ()=> {} // Callback for Modal close
-
-  App.prototype.componentDidUpdate = function componentDidUpdate(prevProps, nextProps) {
-    localStorage.setItem('Rafase282_TwitchApp', JSON.stringify(this.state.streamers));
-  };
-
-  App.prototype.getStreamers = function getStreamers() {
-    return ['freecodecamp', 'storbeck', 'terakilobyte', 'habathcx', 'RobotCaleb', 'thomasballinger', 'noobs2ninjas', 'beohoff', 'MedryBW', 'brunofin', 'comster404', 'quill18', 'rafase282', 'darkness_429', 'kairi78_officiel', 'rafase282s', 'esl_sc2'];
-  };
-
-  App.prototype.clearLocalStorage = function clearLocalStorage(props) {
+  TwitchApp.prototype.clearLocalStorage = function clearLocalStorage(props) {
     localStorage.removeItem('Rafase282_TwitchApp');
     var statusFilter = this.getFilteredStreamers(this.state.filter);
     this.setState({
@@ -88,23 +57,11 @@ var App = function(_React$Component) {
     });
   };
 
-  App.prototype.getUserData = function getUserData(streamer) {
-    return axios.get('https://api.twitch.tv/kraken/users/' + streamer).catch(function(error) {
-      if (error.response) {
-        return error.response;
-      }
-    });
+  TwitchApp.prototype.componentDidUpdate = function componentDidUpdate(prevProps, nextProps) {
+    localStorage.setItem('Rafase282_TwitchApp', JSON.stringify(this.state.streamers));
   };
 
-  App.prototype.getStreamData = function getStreamData(streamer) {
-    return axios.get('https://api.twitch.tv/kraken/streams/' + streamer).catch(function(error) {
-      if (error.response) {
-        return error.response;
-      }
-    });
-  };
-
-  App.prototype.constructPayloadForStreamer = function constructPayloadForStreamer(data) {
+  TwitchApp.prototype.constructPayloadForStreamer = function constructPayloadForStreamer(data) {
     var streamData = data.streamData;
     var userData = data.userData;
 
@@ -170,26 +127,7 @@ var App = function(_React$Component) {
     };
   };
 
-  App.prototype.getStreamerFullData = function getStreamerFullData(streamer) {
-    var _this3 = this;
-
-    return axios.all([this.getStreamData(streamer), this.getUserData(streamer)]).then(axios.spread(function(stream, user) {
-      return {
-        streamData: stream.data,
-        userData: user.data
-      };
-    })).then(function(data) {
-      return _this3.constructPayloadForStreamer(data);
-    }).then(function(payload) {
-      _this3.setState({
-        allStreamersPayloads: [].concat(_this3.state.allStreamersPayloads, [payload]),
-        filteredStreamersPayloads: [].concat(_this3.state.filteredStreamersPayloads, [payload])
-
-      });
-    });
-  };
-
-  App.prototype.getFilteredStreamers = function getFilteredStreamers(status) {
+  TwitchApp.prototype.getFilteredStreamers = function getFilteredStreamers(status) {
     var statusFilteredList = undefined;
     if (status !== null) {
       statusFilteredList = this.state.allStreamersPayloads.filter(function(payload) {
@@ -201,18 +139,7 @@ var App = function(_React$Component) {
     return statusFilteredList;
   };
 
-  App.prototype.filterStreamers = function filterStreamers(event) {
-    var statusFilter = this.getFilteredStreamers(this.state.filter);
-    var updatedPayloadsList = statusFilter.filter(function(payload) {
-      return payload.user.toLowerCase().search(event.target.value.toLowerCase()) !== -1;
-    });
-
-    this.setState({
-      filteredStreamersPayloads: updatedPayloadsList
-    });
-  };
-
-  App.prototype.filterStreamerStatus = function filterStreamerStatus(status) {
+  TwitchApp.prototype.filterStreamerStatus = function filterStreamerStatus(status) {
     var currFilter = undefined;
     switch (status) {
       case true:
@@ -231,29 +158,116 @@ var App = function(_React$Component) {
     });
   };
 
-  App.prototype.updateStreamers = function updateStreamers(newStreamer) {
-    this.setState({
-      streamers: [].concat(this.state.streamers, [newStreamer])
+  TwitchApp.prototype.getFullDataAll = function getFullDataAll(streamers) {
+    var _this2 = this;
+
+    streamers.forEach(function(streamer) {
+      _this2.getStreamerFullData(streamer);
     });
   };
 
-  App.prototype.removeStreamer = function removeStreamer(streamer) {
+  TwitchApp.prototype.getUserData = function getUserData(streamer) {
+    return axios.get('https://api.twitch.tv/kraken/users/' + streamer).catch(function(error) {
+      if (error.response) {
+        return error.response;
+      }
+    });
+  };
+
+  TwitchApp.prototype.getStreamData = function getStreamData(streamer) {
+    return axios.get('https://api.twitch.tv/kraken/streams/' + streamer).catch(function(error) {
+      if (error.response) {
+        return error.response;
+      }
+    });
+  };
+
+  TwitchApp.prototype.getStreamerFullData = function getStreamerFullData(streamer) {
+    var _this3 = this;
+
+    return axios.all([this.getStreamData(streamer), this.getUserData(streamer)]).then(axios.spread(function(stream, user) {
+      return {
+        streamData: stream.data,
+        userData: user.data
+      };
+    })).then(function(data) {
+      return _this3.constructPayloadForStreamer(data);
+    }).then(function(payload) {
+      _this3.setState({
+        allStreamersPayloads: [].concat(_this3.state.allStreamersPayloads, [payload]),
+        filteredStreamersPayloads: [].concat(_this3.state.filteredStreamersPayloads, [payload])
+
+      });
+    });
+  };
+
+  TwitchApp.prototype.filterStreamers = function filterStreamers(event) {
+    console.log(event);
+    var statusFilter = this.getFilteredStreamers(this.state.filter);
+    var updatedPayloadsList = statusFilter.filter(function(payload) {
+      return payload.user.toLowerCase().search(event.target.value.toLowerCase()) !== -1;
+    });
+
+    this.setState({
+      filteredStreamersPayloads: updatedPayloadsList
+    });
+  };
+
+  TwitchApp.prototype.addStreamers = function addStreamers(streamer) {
+    this.setState({
+      streamers: [].concat(this.state.streamers, [streamer])
+    });
+    this.getStreamerFullData(streamer);
+  };
+
+  TwitchApp.prototype.removeStreamer = function removeStreamer(streamer) {
+    // Removes streamer from streamers state
     var streamers = this.state.streamers.map(function(s) {
       return s.toLowerCase();
     }).filter(function(s) {
       return s !== streamer.toLowerCase();
     });
-    var filteredStreamersPayloads = this.state.allStreamersPayloads.filter(function(payload) {
-      return streamers.indexOf(payload.user.toLowerCase()) !== -1;
+
+    // Get filtered list for current view
+    var statusFilter = this.getFilteredStreamers(this.state.filter);
+    // Removes streamer from filtered streamer list
+    var filteredStreamersPayloads = statusFilter.filter(function(payload) {
+      return payload.user.toLowerCase().search(streamer.toLowerCase()) === -1;
+    });
+
+    // Removes streamer from all streamer's payload
+    var allStreamersPayloads = this.state.allStreamersPayloads.filter(function(payload) {
+      return payload.user.toLowerCase().indexOf(streamer.toLowerCase()) === -1;
     });
 
     this.setState({
       streamers: streamers,
-      filteredStreamersPayloads: filteredStreamersPayloads
+      filteredStreamersPayloads: filteredStreamersPayloads,
+      allStreamersPayloads: allStreamersPayloads
     });
   };
 
-  App.prototype.render = function render() {
+  TwitchApp.prototype.componentDidMount = function componentDidMount() {
+    this.getFullDataAll(this.state.streamers);
+    // Modal settings for bringing up edit section
+    $('.modal-trigger').leanModal({
+      dismissible: true, // Modal can be dismissed by clicking outside of the modal
+      opacity: .5, // Opacity of modal background
+      in_duration: 300, // Transition in duration
+      out_duration: 200, // Transition out duration
+      starting_top: '5%', // Starting top style attribute
+      ending_top: '10%', // Ending top style attribute
+      complete: function complete(streamer) {
+          document.getElementById('chipsInput').value = '';
+        } // Callback for Modal close
+    });
+  };
+
+  TwitchApp.prototype.getStreamers = function getStreamers() {
+    return ['freecodecamp', 'storbeck', 'terakilobyte', 'habathcx', 'RobotCaleb', 'thomasballinger', 'noobs2ninjas', 'beohoff', 'MedryBW', 'brunofin', 'comster404', 'quill18', 'rafase282', 'darkness_429', 'kairi78_officiel', 'rafase282s', 'esl_sc2', 'SchviftyFive'];
+  };
+
+  TwitchApp.prototype.render = function render() {
     return React.createElement(
       'section', {
         className: 'container-fluid'
@@ -291,10 +305,8 @@ var App = function(_React$Component) {
           onClickReset: this.clearLocalStorage.bind(this)
         }),
         React.createElement(AllChips, {
-          getStreamerFullData: this.getStreamerFullData.bind(this),
-          updateStreamers: this.updateStreamers.bind(this),
-          chips: this.state.streamers,
-          logo: this.state.defaultLogo,
+          addChip: this.addStreamers.bind(this),
+          chips: this.state.allStreamersPayloads,
           removeChip: this.removeStreamer.bind(this)
         })
       ),
@@ -302,7 +314,7 @@ var App = function(_React$Component) {
     );
   };
 
-  return App;
+  return TwitchApp;
 }(React.Component);
 
 ;
@@ -517,112 +529,93 @@ var UserCard = function UserCard(props) {
     showLink()
   );
 };
-
-var AllChips = function(_React$Component2) {
-  _inherits(AllChips, _React$Component2);
-
-  function AllChips() {
-    _classCallCheck(this, AllChips);
-
-    return _possibleConstructorReturn(this, _React$Component2.apply(this, arguments));
-  }
-
-  AllChips.prototype.handleAddingChip = function handleAddingChip() {
-    var toAdd = this.refs.chipInput.value;
+var AllChips = function AllChips(props) {
+  var clearInput = function clearInput() {
+    return document.getElementById('chipsInput').value = '';
+  };
+  var handleAddingChip = function handleAddingChip(event) {
+    var toAdd = document.getElementById('chipsInput').value;
     if (!toAdd) {
       console.warn('Type username to add streamer!');
       return;
     } else {
-      this.props.updateStreamers(toAdd);
-      this.props.getStreamerFullData(toAdd);
-      this.refs.chipInput.value = '';
+      props.addChip(toAdd);
+      clearInput();
     }
   };
-
-  AllChips.prototype.handleRemovingChip = function handleRemovingChip(streamer) {
-    this.props.removeChip(streamer);
+  var handleRemovingChip = function handleRemovingChip(streamer) {
+    props.removeChip(streamer);
   };
-
-  AllChips.prototype.render = function render() {
-    var _this5 = this;
-
-    var chips = this.props.chips.map(function(chip, i) {
-      return React.createElement(Chip, {
-        name: chip,
-        key: i,
-        id: i,
-        logo: _this5.props.logo,
-        removeChip: _this5.handleRemovingChip.bind(_this5)
-      });
+  var chips = props.chips.map(function(chip, i) {
+    return React.createElement(Chip, {
+      name: chip.user,
+      key: i,
+      logo: chip.logo,
+      removeChip: handleRemovingChip.bind(undefined)
     });
-    return React.createElement(
+  });
+  return React.createElement(
+    'div', {
+      id: 'editstreamers',
+      className: 'modal bottom-sheet center-align'
+    },
+    React.createElement(
       'div', {
-        id: 'editstreamers',
-        className: 'modal bottom-sheet center-align'
+        className: 'modal-content'
       },
       React.createElement(
-        'div', {
-          className: 'modal-content'
+        'h4', {
+          className: 'color-Tp'
         },
+        'Edit the Streamers List'
+      ),
+      React.createElement(
+        'p', {
+          className: 'color-Tp-light'
+        },
+        'Type an username to add a new streamer or click on the ',
         React.createElement(
-          'h4', {
-            className: 'color-Tp'
+          'i', {
+            className: 'chip-btn-icon material-icons'
           },
-          'Edit the Streamers List'
+          'close'
         ),
-        React.createElement(
-          'p', {
-            className: 'color-Tp-light'
-          },
-          'Type an username to add a new streamer or click on the ',
-          React.createElement(
-            'i', {
-              className: 'close material-icons'
-            },
-            'close'
-          ),
-          ' to delete an existing one.'
-        ),
-        React.createElement(
-          'div', {
-            className: 'chips'
-          },
-          chips,
-          React.createElement('input', {
-            ref: 'chipInput',
-            className: 'color-Tp center-align',
-            id: 'chipsInput',
-            type: 'text',
-            name: 'chipsInput',
-            placeholder: 'Type here to add more streamers'
-          })
-        )
+        ' to delete an existing one.'
       ),
       React.createElement(
         'div', {
-          className: 'modal-footer'
+          className: 'chips'
         },
-        React.createElement(
-          'button', {
-            className: 'btn color-Bp',
-            onClick: this.handleAddingChip.bind(this)
-          },
-          ' Add Streamer'
-        ),
-        React.createElement(
-          'a', {
-            className: 'modal-action modal-close waves-effect waves-green btn-flat'
-          },
-          'Close'
-        )
+        chips,
+        React.createElement('input', {
+          className: 'color-Tp center-align',
+          id: 'chipsInput',
+          type: 'text',
+          name: 'chipsInput',
+          placeholder: 'Type here to add more streamers'
+        })
       )
-    );
-  };
-
-  return AllChips;
-}(React.Component);
-
-;
+    ),
+    React.createElement(
+      'div', {
+        className: 'modal-footer'
+      },
+      React.createElement(
+        'button', {
+          className: 'btn color-Bp',
+          onClick: handleAddingChip.bind(undefined)
+        },
+        ' Add Streamer'
+      ),
+      React.createElement(
+        'a', {
+          className: 'modal-action modal-close waves-effect waves-green btn-flat'
+        },
+        'Close'
+      )
+    )
+  );
+};
 var Chip = function Chip(props) {
   return React.createElement(
     'div', {
@@ -635,7 +628,7 @@ var Chip = function Chip(props) {
     props.name,
     React.createElement(
       'i', {
-        className: 'close material-icons color-Tp-light',
+        className: 'chip-btn material-icons color-Tp-light',
         onClick: function onClick() {
           return props.removeChip(props.name);
         }
@@ -915,6 +908,7 @@ var FooterInfoButtons = function FooterInfoButtons() {
     )
   );
 };
+
 var FooterInfo = function FooterInfo() {
   return React.createElement(
     'div', {
@@ -948,4 +942,4 @@ var FooterInfo = function FooterInfo() {
   );
 };
 
-ReactDOM.render(React.createElement(App, null), document.querySelector('#root'));
+ReactDOM.render(React.createElement(TwitchApp, null), document.querySelector('#root'));
