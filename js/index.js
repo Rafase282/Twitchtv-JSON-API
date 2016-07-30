@@ -34,25 +34,19 @@ var App = function(_React$Component) {
   function App(props) {
     _classCallCheck(this, App);
 
+    var accList = JSON.parse(localStorage.getItem('Rafase282_TwitchApp'));
+
     var _this = _possibleConstructorReturn(this, _React$Component.call(this, props));
 
     _this.state = {
-      streamers: _this.getStreamers(),
+      streamers: accList ? accList : _this.getStreamers(),
       defaultLogo: 'https://s-media-cache-ak0.pinimg.com/236x/1b/d0/eb/1bd0eb3468a132c2f8d02a56435ebd1e.jpg',
       filteredStreamersPayloads: [],
-      allStreamersPayloads: []
+      allStreamersPayloads: [],
+      filter: null
     };
     return _this;
   }
-
-  App.prototype.componentWillMount = function componentWillMount() {
-    var accList = JSON.parse(localStorage.getItem('Rafase282_TwitchApp'));
-    if (accList) {
-      this.setState({
-        streamers: accList
-      });
-    }
-  };
 
   App.prototype.componentDidMount = function componentDidMount() {
     var _this2 = this;
@@ -124,6 +118,7 @@ var App = function(_React$Component) {
       preview = undefined,
       followers = undefined,
       fps = undefined;
+    var streaming = false;
 
     function setOffline(msg) {
       viewers = msg;
@@ -157,6 +152,7 @@ var App = function(_React$Component) {
       preview = streamData.stream.preview.large;
       followers = numeral(streamData.stream.channel.followers).format('0,0');
       fps = numeral(streamData.stream.average_fps).format('0.00');
+      streaming = true;
     };
 
     return {
@@ -169,7 +165,8 @@ var App = function(_React$Component) {
       game: game,
       preview: preview,
       followers: followers,
-      fps: fps
+      fps: fps,
+      streaming: streaming
     };
   };
 
@@ -192,19 +189,45 @@ var App = function(_React$Component) {
     });
   };
 
-  App.prototype.filterStreamers = function filterStreamers(event) {
-    var updated = this.state.streamers.map(function(item) {
-      return item.toLowerCase();
-    }).filter(function(item) {
-      return item.search(event.target.value.toLowerCase()) !== -1;
-    });
+  App.prototype.getFilteredStreamers = function getFilteredStreamers(status) {
+    var statusFilteredList = undefined;
+    if (status !== null) {
+      statusFilteredList = this.state.allStreamersPayloads.filter(function(payload) {
+        return payload.streaming === status;
+      });
+    } else {
+      statusFilteredList = this.state.allStreamersPayloads;
+    }
+    return statusFilteredList;
+  };
 
-    var updatedPayloadsList = this.state.allStreamersPayloads.filter(function(payload) {
-      return updated.indexOf(payload.user.toLowerCase()) !== -1;
+  App.prototype.filterStreamers = function filterStreamers(event) {
+    var statusFilter = this.getFilteredStreamers(this.state.filter);
+    var updatedPayloadsList = statusFilter.filter(function(payload) {
+      return payload.user.toLowerCase().search(event.target.value.toLowerCase()) !== -1;
     });
 
     this.setState({
       filteredStreamersPayloads: updatedPayloadsList
+    });
+  };
+
+  App.prototype.filterStreamerStatus = function filterStreamerStatus(status) {
+    var currFilter = undefined;
+    switch (status) {
+      case true:
+        currFilter = true;
+        break;
+      case false:
+        currFilter = false;
+        break;
+      default:
+        currFilter = null;
+    };
+    var statusFilter = this.getFilteredStreamers(status);
+    this.setState({
+      filter: currFilter,
+      filteredStreamersPayloads: statusFilter
     });
   };
 
@@ -252,6 +275,9 @@ var App = function(_React$Component) {
               'div', {
                 className: 'card-panel color-Bp-light'
               },
+              React.createElement(FilterTabs, {
+                onClickStatus: this.filterStreamerStatus.bind(this)
+              }),
               React.createElement(SearchBar, {
                 filterStreamers: this.filterStreamers.bind(this)
               }),
@@ -279,10 +305,71 @@ var App = function(_React$Component) {
   return App;
 }(React.Component);
 
-var SearchBar = function SearchBar(props) {
+;
+var FilterTabs = function FilterTabs(props) {
   return React.createElement(
     'div', {
       className: 'row'
+    },
+    React.createElement(
+      'div', {
+        className: 'col s12'
+      },
+      React.createElement(
+        'ul', {
+          className: 'tabs color-Bp'
+        },
+        React.createElement(
+          'li', {
+            className: 'tab col s12'
+          },
+          React.createElement(
+            'a', {
+              className: 'color-Ts active',
+              onClick: function onClick() {
+                return props.onClickStatus(null);
+              }
+            },
+            'All Streamers'
+          )
+        ),
+        React.createElement(
+          'li', {
+            className: 'tab col s12'
+          },
+          React.createElement(
+            'a', {
+              className: 'color-Ts',
+              onClick: function onClick() {
+                return props.onClickStatus(true);
+              }
+            },
+            'Online Streamers'
+          )
+        ),
+        React.createElement(
+          'li', {
+            className: 'tab col s12'
+          },
+          React.createElement(
+            'a', {
+              className: 'color-Ts',
+              onClick: function onClick() {
+                return props.onClickStatus(false);
+              }
+            },
+            'Offline Streamers'
+          )
+        )
+      )
+    )
+  );
+};
+var SearchBar = function SearchBar(props) {
+  return React.createElement(
+    'div', {
+      className: 'row',
+      id: 'searchBar'
     },
     React.createElement(
       'div', {
@@ -296,7 +383,7 @@ var SearchBar = function SearchBar(props) {
       ),
       React.createElement('input', {
         onChange: props.filterStreamers,
-        className: 'color-Ts',
+        className: 'color-Ts center-align',
         id: 'search',
         type: 'text',
         name: 'search',
@@ -528,6 +615,7 @@ var AllChips = function(_React$Component2) {
   return AllChips;
 }(React.Component);
 
+;
 var Chip = function Chip(props) {
   return React.createElement(
     'div', {

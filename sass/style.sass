@@ -15,22 +15,39 @@ main
   -webkit-flex: 1 0 auto
   -ms-flex: 1 0 auto
   flex: 1 0 auto
-
+  
 .devicons
   font-size: 2.3em
 
-.board
-  border-style: solid
-  margin: 10%
-  padding: 10%
+.tabs, .card-panel, 
+  border-radius: 5px
 
+#searchBar
+  width: 95%
+  margin: 0 auto
+  display: block
+  
+a.active
+  border-style: solid none solid none
+  
+.collection-item:first-child
+  border-radius: 5px 5px 0 0
+  
+.collection-item:last-child
+  border-radius: 0 0 5px 5px
+  
+.collapsible-header, .collapsible-body
+  border-style: none
+  
+.collapsible-header.active,
+  border-style: none none solid none
+  
 /* Color variables
  * Use these variables with the
  * color classes.
 
- * Color Scheme
- * Use these classes for giving color
- */
+/* Color Scheme
+ * Use these classes for giving color*/
 
 .color-Bp
   background-color: #0d47a1 !important

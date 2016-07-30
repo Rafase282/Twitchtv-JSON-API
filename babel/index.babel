@@ -1,21 +1,15 @@
 class App extends React.Component {
   constructor(props) {
+    const accList = JSON.parse(localStorage.getItem('Rafase282_TwitchApp'));
     super(props);
     this.state = {
-      streamers: this.getStreamers(),
+      streamers: accList? accList : this.getStreamers(),
       defaultLogo: 'https://s-media-cache-ak0.pinimg.com/236x/1b/d0/eb/1bd0eb3468a132c2f8d02a56435ebd1e.jpg',
       filteredStreamersPayloads: [],
-      allStreamersPayloads: []
+      allStreamersPayloads: [],
+      filter: null
     }
-  }
-  componentWillMount() {
-    let accList = JSON.parse(localStorage.getItem('Rafase282_TwitchApp'));
-    if (accList) {
-      this.setState({
-        streamers: accList
-      })
-    }
-  }
+  };
   componentDidMount() {
     let streamers = this.state.streamers;
     let logo = this.state.defaultLogo;
@@ -33,10 +27,10 @@ class App extends React.Component {
       ending_top: '10%', // Ending top style attribute
       //complete: ()=> {} // Callback for Modal close
     });
-  }
+  };
   componentDidUpdate(prevProps, nextProps) {
     localStorage.setItem('Rafase282_TwitchApp', JSON.stringify(this.state.streamers));
-  }
+  };
   getStreamers() {
     return [
       'freecodecamp',
@@ -56,8 +50,8 @@ class App extends React.Component {
       'kairi78_officiel',
       'rafase282s',
       'esl_sc2'
-    ]
-  }
+    ];
+  };
   clearLocalStorage(props) {
     localStorage.removeItem('Rafase282_TwitchApp');
     this.setState({
@@ -65,29 +59,32 @@ class App extends React.Component {
       filteredStreamersPayloads: this.state.filteredStreamersPayloads.slice(0, 17),
       allStreamersPayloads: this.state.allStreamersPayloads.slice(0, 17)
     });
-  }
+  };
   getUserData(streamer) {
-    return axios.get('https://api.twitch.tv/kraken/users/' + streamer)
+    return (axios.get('https://api.twitch.tv/kraken/users/' + streamer)
       .catch(function(error) {
         if (error.response) {
           return error.response;
         }
-      });
-  }
+      })
+    )
+  };
   getStreamData(streamer) {
-    return axios.get('https://api.twitch.tv/kraken/streams/' + streamer)
+    return (axios.get('https://api.twitch.tv/kraken/streams/' + streamer)
       .catch(function(error) {
         if (error.response) {
           return error.response;
         }
-      });
-  }
+      })
+    )
+  };
   constructPayloadForStreamer(data) {
     const {
       streamData,
       userData
     } = data;
     let user, logo, bio, status, url, viewers, game, preview, followers, fps;
+    let streaming = false;
 
     function setOffline(msg) {
       viewers = msg;
@@ -121,6 +118,7 @@ class App extends React.Component {
       preview = streamData.stream.preview.large;
       followers = numeral(streamData.stream.channel.followers).format('0,0');
       fps = numeral(streamData.stream.average_fps).format('0.00');
+      streaming = true;
     };
 
     return {
@@ -133,11 +131,12 @@ class App extends React.Component {
       game,
       preview,
       followers,
-      fps
+      fps,
+      streaming
     }
-  }
+  };
   getStreamerFullData(streamer) {
-    return axios.all([this.getStreamData(streamer), this.getUserData(streamer)])
+    return (axios.all([this.getStreamData(streamer), this.getUserData(streamer)])
       .then(axios.spread((stream, user) => {
         return {
           streamData: stream.data,
@@ -152,28 +151,51 @@ class App extends React.Component {
 
         });
       })
-  }
+    );
+  };
+  getFilteredStreamers (status) {
+    let statusFilteredList;
+    if (status !== null) {
+      statusFilteredList = this.state.allStreamersPayloads.filter((payload) => payload.streaming === status);
+    } else {
+      statusFilteredList = this.state.allStreamersPayloads;
+    }
+    return statusFilteredList
+  };
   filterStreamers(event) {
-    const updated = this.state.streamers
-      .map((item) => item.toLowerCase())
-      .filter((item) => {
-        return item.search(event.target.value.toLowerCase()) !== -1;
-      });
-
-    const updatedPayloadsList = this.state.allStreamersPayloads.filter((payload) => {
-      return updated.indexOf(payload.user.toLowerCase()) !== -1;
+    const statusFilter = this.getFilteredStreamers(this.state.filter);
+    const updatedPayloadsList = statusFilter.filter((payload) => {
+      return payload.user.toLowerCase()
+        .search(event.target.value.toLowerCase()) !== -1;
     });
 
     this.setState({
       filteredStreamersPayloads: updatedPayloadsList
     });
-  }
+  };
+  filterStreamerStatus(status) {
+    let currFilter;
+    switch(status) {
+      case true:
+        currFilter = true
+        break;
+      case false:
+        currFilter = false
+        break;
+      default:
+        currFilter = null
+    };
+    const statusFilter = this.getFilteredStreamers(status);
+    this.setState({
+      filter: currFilter,
+      filteredStreamersPayloads: statusFilter
+    });
+  };
   updateStreamers(newStreamer) {
     this.setState({
       streamers: [...this.state.streamers, newStreamer]
     });
-
-  }
+  };
   removeStreamer(streamer) {
     const streamers = this.state.streamers
       .map(s => s.toLowerCase())
@@ -186,14 +208,15 @@ class App extends React.Component {
       streamers,
       filteredStreamersPayloads
     });
-  }
+  };
   render() {
-    return <section className='container-fluid'>
+    return (<section className='container-fluid'>
       <Header/>
       <main className='page-content container'>
         <div className='row'>
           <div className='col s12'>
             <div className='card-panel color-Bp-light'>
+              <FilterTabs onClickStatus={this.filterStreamerStatus.bind(this)}/>
               <SearchBar filterStreamers={this.filterStreamers.bind(this)} />
               <FilteredList filteredStreamersPayloads={this.state.filteredStreamersPayloads} />
             </div>
@@ -203,28 +226,47 @@ class App extends React.Component {
         <AllChips  getStreamerFullData={this.getStreamerFullData.bind(this)} updateStreamers={this.updateStreamers.bind(this)} chips={this.state.streamers} logo={this.state.defaultLogo} removeChip={this.removeStreamer.bind(this)}/>
       </main>
       <Footer/>
-    </section>;
+    </section>);
   }
-}
+};
+const FilterTabs = (props) => {
+  return (
+    <div className="row">
+    <div className="col s12">
+      <ul className="tabs color-Bp">
+        <li className="tab col s12">
+          <a className='color-Ts active' onClick={()=> props.onClickStatus(null)}>All Streamers</a>
+        </li>
+        <li className="tab col s12">
+          <a className='color-Ts' onClick={()=> props.onClickStatus(true)}>Online Streamers</a>
+        </li>
+        <li className="tab col s12">
+          <a className='color-Ts' onClick={()=> props.onClickStatus(false)}>Offline Streamers</a>
+        </li>
+      </ul>
+    </div>
+  </div>
+  )
+};
 const SearchBar = (props) => {
   return (
-    <div className='row'>
-          <div className='input-field col s12'>
-            <i className='material-icons prefix color-Ts'>search</i>
-            <input onChange={props.filterStreamers} className='color-Ts' id='search' type='text' name='search' placeholder='Search for streamers'/>
-          </div>
+    <div className='row' id='searchBar'>
+      <div className='input-field col s12'>
+        <i className='material-icons prefix color-Ts'>search</i>
+        <input onChange={props.filterStreamers} className='color-Ts center-align' id='search' type='text' name='search' placeholder='Search for streamers'/>
       </div>
+    </div>
   );
-}
+};
 const FilteredList = (props) => {
   return (
     <ul className='collection collapsible popout' data-collapsible='accordion'>
-				{ props.filteredStreamersPayloads.map((payload, i) => {
-		        return <UserCard key={i} payload={payload} /> })
-				}
-			</ul>
+			{ props.filteredStreamersPayloads.map((payload, i) => {
+        return <UserCard key={i} payload={payload} /> })
+			}
+		</ul>
   )
-}
+};
 const UserCard = (props) => {
   const {
     user,
@@ -249,39 +291,39 @@ const UserCard = (props) => {
   }
   return (
     <li className='collection-item avatar color-Bsd color-Tp'>
-        <div className='collapsible-header'>
-          <span className='title'>
-            <img src={logo} alt={user} className='circle'/> {user}
-            <p>
-              <strong>Title: </strong>
-              {status}
-            </p>
-          </span>
-        </div>
-        <div className='collapsible-body'>
+      <div className='collapsible-header'>
+        <span className='title'>
+          <img src={logo} alt={user} className='circle'/> {user}
           <p>
-            <strong>Bio: </strong>
-            {bio}<br/>
-            <strong>Playing: </strong>
-            {game}<br/>
-            <strong>Current Views: </strong>
-            {viewers}<br/>
-            <strong>Followers: </strong>
-            {followers}<br/>
-            <strong>Stream Average FPS: </strong>
-            {fps}
+            <strong>Title: </strong>
+            {status}
           </p>
-          <img src={preview} className='responsive-img'/>
-        </div>
-        {showLink()}
-      </li>
+        </span>
+      </div>
+      <div className='collapsible-body'>
+        <p>
+          <strong>Bio: </strong>
+          {bio}<br/>
+          <strong>Playing: </strong>
+          {game}<br/>
+          <strong>Current Views: </strong>
+          {viewers}<br/>
+          <strong>Followers: </strong>
+          {followers}<br/>
+          <strong>Stream Average FPS: </strong>
+          {fps}
+        </p>
+        <img src={preview} className='responsive-img'/>
+      </div>
+      {showLink()}
+    </li>
   )
-}
+};
 class AllChips extends React.Component {
   handleInputValue() {
     const toDelete = this.refs.chipe;
     console.log(toDelete);
-  }
+  };
   handleAddingChip() {
     const toAdd = this.refs.chipInput.value;
     if(!toAdd) {
@@ -293,44 +335,42 @@ class AllChips extends React.Component {
       this.props.getStreamerFullData(toAdd);
       this.refs.chipInput.value = '';
     }
-  }
+  };
   handleRemovingChip(streamer) {
     this.props.removeChip(streamer);
-  }
+  };
   render() {
     const chips = this.props.chips.map((chip, i) => {
       return <Chip name={chip} key={i} id={i} logo={this.props.logo} removeChip={this.handleRemovingChip.bind(this)}/>
     })
     return (
       <div id='editstreamers' className='modal bottom-sheet'>
-          <div className='modal-content'>
-            <h4>Edit Streamers List</h4>
-            <p>Type an username to add a new streamer.</p>
-            
-            <div className="chips">
-       {chips}
-       <input onChange={this.handleInputValue.bind(this)} ref="chipInput" className='input' placeholder=''/>
-    </div>
-            
+        <div className='modal-content'>
+          <h4>Edit Streamers List</h4>
+          <p>Type an username to add a new streamer.</p>
+          <div className="chips">
+            {chips}
+            <input onChange={this.handleInputValue.bind(this)} ref="chipInput" className='input' placeholder=''/>
           </div>
-          <div className='modal-footer'>
-            <button onClick={this.handleAddingChip.bind(this)}> Add Streamer</button>
-            <a className='modal-action modal-close waves-effect waves-green btn-flat'>Close</a>
-          </div>
+            
         </div>
+        <div className='modal-footer'>
+          <button onClick={this.handleAddingChip.bind(this)}> Add Streamer</button>
+          <a className='modal-action modal-close waves-effect waves-green btn-flat'>Close</a>
+        </div>
+      </div>
     )
-
   }
-}
+};
 const Chip = (props) => {
   return (
     <div className="chip">
-    <img src={props.logo} alt={props.name}/>
-    {props.name}
-    <i className="close material-icons" onClick={()=>props.removeChip(props.name)}>close</i>
-  </div>
+      <img src={props.logo} alt={props.name}/>
+      {props.name}
+      <i className="close material-icons" onClick={()=>props.removeChip(props.name)}>close</i>
+    </div>
   )
-}
+};
 const Menu = (props) => {
   return (
     <div className = 'fixed-action-btn horizontal click-to-toggle'
@@ -352,95 +392,108 @@ const Menu = (props) => {
       </ul>
     </div>
   )
-}
+};
 const Header = () => {
-  return (<header className='page-header center-align'>
+  return (
+    <header className='page-header center-align'>
       <nav>
         <div className='nav-wrapper color-Bp'>
           <a className='brand-logo center color-Ts'>Twitch Status</a>
         </div>
       </nav>
-    </header>)
-}
+    </header>
+  )
+};
 const Footer = () => {
-  return (<footer className='page-footer center-align color-Bp'>
+  return (
+    <footer className='page-footer center-align color-Bp'>
       <FooterInfo/>
       <FooterCopyright/>
-    </footer>)
-}
+    </footer>
+  )
+};
 const FooterCopyright = () => {
-  return (<div className='footer-copyright'>
+  return (
+    <div className='footer-copyright'>
       <div className='container center-align'>
         Copyright &copy; &nbsp;
         <a className='color-Ts' href='http://rafase282.github.io/'>Rafael J. Rodriguez</a>
         &nbsp; 2016. All Rights Reserved
       </div>
-    </div>)
-}
+    </div>
+  )
+};
 const FooterInfoButtons = () => {
   return (
     <div className='col l4 offset-l2 s12'>
-        <h5 className='color-Ts'>Follow Me!</h5>
-        <div className='col s6'>
-          <ul>
-            <li>
-              <a href='https://github.com/Rafase282' target='_blank'>
-                <span data-position='left' data-tooltip='GitHub' className='devicons devicons-github_badge color-Ts tooltipped'/>
-              </a>
-            </li>
-            <li>
-              <a href='https://www.linkedin.com/in/rafase282' target='_blank'>
-                <i data-position='left' data-tooltip='LinkedIn' className='mdi mdi-linkedin-box small color-Ts tooltipped'/>
-              </a>
-            </li>
-            <li>
-              <a href='http://codepen.io/Rafase282' target='_blank'>
-                <span data-position='left' data-tooltip='Codepen' className='devicons devicons-codepen color-Ts tooltipped'/>
-              </a>
-            </li>
-            <li>
-              <a href='https://www.youtube.com/c/rafaelrodriguez282' target='_blank'>
-                <i data-position='left' data-tooltip='YouTube' className='mdi mdi-youtube-play small color-Ts tooltipped'></i>
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div className='col s6'>
-          <ul>
-            <li>
-              <a href='https://medium.com/@Rafase282' target='_blank'><i data-position='left' data-tooltip='Medium' className='mdi mdi-medium small color-Ts tooltipped'/></a>
-            </li>
-            <li>
-              <a href='https://twitter.com/Rafase282' target='_blank'><i data-position='left' data-tooltip='Twitter' className='mdi mdi-twitter small color-Ts tooltipped'/></a>
-            </li>
-            <li>
-              <a href='http://www.freecodecamp.com/rafase282' target='_blank' style={{
-                fontSize: '2em'
-              }} className='color-Ts'>(<i data-position='left' data-tooltip='Free Code Camp' className='fa fa-fire fa-fw tooltipped'/>)</a>
-            </li>
-            <li>
-              <a href='https://www.twitch.tv/rafase282' target='_blank'><i data-position='left' data-tooltip='Twitch' className='mdi mdi-twitch small color-Ts tooltipped'/></a>
-            </li>
-          </ul>
-        </div>
+      <h5 className='color-Ts'>Follow Me!</h5>
+      <div className='col s6'>
+        <ul>
+          <li>
+            <a href='https://github.com/Rafase282' target='_blank'>
+              <span data-position='left' data-tooltip='GitHub' className='devicons devicons-github_badge color-Ts tooltipped'/>
+            </a>
+          </li>
+          <li>
+            <a href='https://www.linkedin.com/in/rafase282' target='_blank'>
+              <i data-position='left' data-tooltip='LinkedIn' className='mdi mdi-linkedin-box small color-Ts tooltipped'/>
+            </a>
+          </li>
+          <li>
+            <a href='http://codepen.io/Rafase282' target='_blank'>
+              <span data-position='left' data-tooltip='Codepen' className='devicons devicons-codepen color-Ts tooltipped'/>
+            </a>
+          </li>
+          <li>
+            <a href='https://www.youtube.com/c/rafaelrodriguez282' target='_blank'>
+              <i data-position='left' data-tooltip='YouTube' className='mdi mdi-youtube-play small color-Ts tooltipped'></i>
+            </a>
+          </li>
+        </ul>
       </div>
+      <div className='col s6'>
+        <ul>
+          <li>
+            <a href='https://medium.com/@Rafase282' target='_blank'>
+              <i data-position='left' data-tooltip='Medium' className='mdi mdi-medium small color-Ts tooltipped'/>
+            </a>
+          </li>
+          <li>
+            <a href='https://twitter.com/Rafase282' target='_blank'>
+              <i data-position='left' data-tooltip='Twitter' className='mdi mdi-twitter small color-Ts tooltipped'/>
+            </a>
+          </li>
+          <li>
+            <a href='http://www.freecodecamp.com/rafase282' target='_blank' style={{
+              fontSize: '2em'
+            }} className='color-Ts'>(
+              <i data-position='left' data-tooltip='Free Code Camp' className='fa fa-fire fa-fw tooltipped'/>)
+            </a>
+          </li>
+          <li>
+            <a href='https://www.twitch.tv/rafase282' target='_blank'>
+              <i data-position='left' data-tooltip='Twitch' className='mdi mdi-twitch small color-Ts tooltipped'/>
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
   )
 }
 const FooterInfo = () => {
   return (
     <div className='container'>
-        <div className='row'>
-          <div className='col l6 s12'>
-            <h5 className='color-Ts'>About the app</h5>
-            <p className='color-Ts-light'>The purpose of the app is to track your favorite streamers so you can see when they are online along with some basic statistics like the number of current views, followers, link to channels and preview of the current stream.
-              <br/>
-              If the user if offline or the account has been closed, it will let you know. You are able to add and remove accounts to keep track of.</p>
-
-          </div>
-          <FooterInfoButtons/>
+      <div className='row'>
+        <div className='col l6 s12'>
+          <h5 className='color-Ts'>About the app</h5>
+          <p className='color-Ts-light'>The purpose of the app is to track your favorite streamers so you can see when they are online along with some basic statistics like the number of current views, followers, link to channels and preview of the current stream.
+          <br/>
+          If the user if offline or the account has been closed, it will let you know. You are able to add and remove accounts to keep track of.</p>
         </div>
+        <FooterInfoButtons/>
       </div>
-  );
+    </div>
+  )
 };
 
 ReactDOM.render(
