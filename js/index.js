@@ -563,7 +563,7 @@ var AllChips = function(_React$Component2) {
     return React.createElement(
       'div', {
         id: 'editstreamers',
-        className: 'modal bottom-sheet'
+        className: 'modal bottom-sheet center-align'
       },
       React.createElement(
         'div', {
@@ -571,7 +571,7 @@ var AllChips = function(_React$Component2) {
         },
         React.createElement(
           'h4', {
-            className: 'center-align color-Tp'
+            className: 'color-Tp'
           },
           'Edit the Streamers List'
         ),

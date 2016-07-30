@@ -344,9 +344,9 @@ class AllChips extends React.Component {
       return <Chip name={chip} key={i} id={i} logo={this.props.logo} removeChip={this.handleRemovingChip.bind(this)}/>
     })
     return (
-      <div id='editstreamers' className='modal bottom-sheet'>
+      <div id='editstreamers' className='modal bottom-sheet center-align'>
         <div className='modal-content'>
-          <h4 className='center-align color-Tp'>Edit the Streamers List</h4>
+          <h4 className='color-Tp'>Edit the Streamers List</h4>
           <p className='color-Tp-light'>Type an username to add a new streamer or click on the <i className="close material-icons" >close</i> to delete an existing one.</p>
           <div className="chips">
             {chips}
