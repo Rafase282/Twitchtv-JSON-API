@@ -81,10 +81,10 @@ var App = function(_React$Component) {
 
   App.prototype.clearLocalStorage = function clearLocalStorage(props) {
     localStorage.removeItem('Rafase282_TwitchApp');
+    var statusFilter = this.getFilteredStreamers(this.state.filter);
     this.setState({
       streamers: this.getStreamers(),
-      filteredStreamersPayloads: this.state.filteredStreamersPayloads.slice(0, 17),
-      allStreamersPayloads: this.state.allStreamersPayloads.slice(0, 17)
+      filteredStreamersPayloads: statusFilter
     });
   };
 
@@ -527,11 +527,6 @@ var AllChips = function(_React$Component2) {
     return _possibleConstructorReturn(this, _React$Component2.apply(this, arguments));
   }
 
-  AllChips.prototype.handleInputValue = function handleInputValue() {
-    var toDelete = this.refs.chipe;
-    console.log(toDelete);
-  };
-
   AllChips.prototype.handleAddingChip = function handleAddingChip() {
     var toAdd = this.refs.chipInput.value;
     if (!toAdd) {
@@ -594,7 +589,6 @@ var AllChips = function(_React$Component2) {
           },
           chips,
           React.createElement('input', {
-            onChange: this.handleInputValue.bind(this),
             ref: 'chipInput',
             className: 'color-Tp center-align',
             id: 'chipsInput',

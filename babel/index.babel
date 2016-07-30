@@ -54,10 +54,10 @@ class App extends React.Component {
   };
   clearLocalStorage(props) {
     localStorage.removeItem('Rafase282_TwitchApp');
+    const statusFilter = this.getFilteredStreamers(this.state.filter);
     this.setState({
       streamers: this.getStreamers(),
-      filteredStreamersPayloads: this.state.filteredStreamersPayloads.slice(0, 17),
-      allStreamersPayloads: this.state.allStreamersPayloads.slice(0, 17)
+      filteredStreamersPayloads: statusFilter
     });
   };
   getUserData(streamer) {
@@ -320,10 +320,6 @@ const UserCard = (props) => {
   )
 };
 class AllChips extends React.Component {
-  handleInputValue() {
-    const toDelete = this.refs.chipe;
-    console.log(toDelete);
-  };
   handleAddingChip() {
     const toAdd = this.refs.chipInput.value;
     if(!toAdd) {
@@ -350,7 +346,7 @@ class AllChips extends React.Component {
           <p className='color-Tp-light'>Type an username to add a new streamer or click on the <i className="close material-icons" >close</i> to delete an existing one.</p>
           <div className="chips">
             {chips}
-            <input onChange={this.handleInputValue.bind(this)} ref="chipInput" className='color-Tp center-align' id='chipsInput' type='text' name='chipsInput' placeholder='Type here to add more streamers'/>
+            <input ref="chipInput" className='color-Tp center-align' id='chipsInput' type='text' name='chipsInput' placeholder='Type here to add more streamers'/>
           </div>
         </div>
         <div className='modal-footer'>
