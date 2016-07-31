@@ -259,13 +259,13 @@ const FilterTabs = (props) => {
     <div className='row'>
     <div className='col s12'>
       <ul className='tabs color-Bp'>
-        <li className='tab col s12'>
+        <li className='tab col s12 m4'>
           <a className='color-Ts' id='all' onClick={()=> props.onClickStatus(null)}>All Streamers</a>
         </li>
-        <li className='tab col s12'>
+        <li className='tab col s12 m4'>
           <a className='color-Ts' id='online' onClick={()=> props.onClickStatus(true)}>Online Streamers</a>
         </li>
-        <li className='tab col s12'>
+        <li className='tab col s12 m4'>
           <a className='color-Ts' id='offline' onClick={()=> props.onClickStatus(false)}>Offline Streamers</a>
         </li>
       </ul>
@@ -363,6 +363,12 @@ const AllChips = (props) => {
   const chips = props.chips.map((chip, i) => {
     return <Chip name={chip.user} key={i} logo={chip.logo} removeChip={handleRemovingChip.bind(this)}/>
     });
+  $("#chipsInput").keyup(function (e) {
+    if (e.keyCode == 13) {
+      // Adds user on enter
+      handleAddingChip();
+      }
+  });
   return (
       <div id='editstreamers' className='modal bottom-sheet center-align'>
         <div className='modal-content'>
