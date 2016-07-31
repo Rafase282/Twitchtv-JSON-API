@@ -12,10 +12,17 @@ class TwitchApp extends React.Component {
   };
   clearLocalStorage(props) {
     localStorage.removeItem('Rafase282_TwitchApp');
-    const statusFilter = this.getFilteredStreamers(this.state.filter);
+    const streamers = this.getStreamers();
+    $('#online').removeClass('active');
+    $('#offline').removeClass('active');
+    $('ul.tabs').tabs();
+    $('ul.tabs').tabs('select_tab', 'all');
+    this.getFullDataAll(streamers);    
     this.setState({
-      streamers: this.getStreamers(),
-      filteredStreamersPayloads: statusFilter
+      streamers,
+      filteredStreamersPayloads: [],
+      allStreamersPayloads: [],
+      filter: null
     });
     
   };
@@ -253,13 +260,13 @@ const FilterTabs = (props) => {
     <div className='col s12'>
       <ul className='tabs color-Bp'>
         <li className='tab col s12'>
-          <a className='color-Ts active' onClick={()=> props.onClickStatus(null)}>All Streamers</a>
+          <a className='color-Ts' id='all' onClick={()=> props.onClickStatus(null)}>All Streamers</a>
         </li>
         <li className='tab col s12'>
-          <a className='color-Ts' onClick={()=> props.onClickStatus(true)}>Online Streamers</a>
+          <a className='color-Ts' id='online' onClick={()=> props.onClickStatus(true)}>Online Streamers</a>
         </li>
         <li className='tab col s12'>
-          <a className='color-Ts' onClick={()=> props.onClickStatus(false)}>Offline Streamers</a>
+          <a className='color-Ts' id='offline' onClick={()=> props.onClickStatus(false)}>Offline Streamers</a>
         </li>
       </ul>
     </div>

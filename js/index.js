@@ -50,10 +50,17 @@ var TwitchApp = function(_React$Component) {
 
   TwitchApp.prototype.clearLocalStorage = function clearLocalStorage(props) {
     localStorage.removeItem('Rafase282_TwitchApp');
-    var statusFilter = this.getFilteredStreamers(this.state.filter);
+    var streamers = this.getStreamers();
+    $('#online').removeClass('active');
+    $('#offline').removeClass('active');
+    $('ul.tabs').tabs();
+    $('ul.tabs').tabs('select_tab', 'all');
+    this.getFullDataAll(streamers);
     this.setState({
-      streamers: this.getStreamers(),
-      filteredStreamersPayloads: statusFilter
+      streamers: streamers,
+      filteredStreamersPayloads: [],
+      allStreamersPayloads: [],
+      filter: null
     });
   };
 
@@ -125,6 +132,17 @@ var TwitchApp = function(_React$Component) {
       fps: fps,
       streaming: streaming
     };
+  };
+
+  TwitchApp.prototype.filterStreamers = function filterStreamers(event) {
+    var statusFilter = this.getFilteredStreamers(this.state.filter);
+    var updatedPayloadsList = statusFilter.filter(function(payload) {
+      return payload.user.toLowerCase().search(event.target.value.toLowerCase()) !== -1;
+    });
+
+    this.setState({
+      filteredStreamersPayloads: updatedPayloadsList
+    });
   };
 
   TwitchApp.prototype.getFilteredStreamers = function getFilteredStreamers(status) {
@@ -201,18 +219,6 @@ var TwitchApp = function(_React$Component) {
     });
   };
 
-  TwitchApp.prototype.filterStreamers = function filterStreamers(event) {
-    console.log(event);
-    var statusFilter = this.getFilteredStreamers(this.state.filter);
-    var updatedPayloadsList = statusFilter.filter(function(payload) {
-      return payload.user.toLowerCase().search(event.target.value.toLowerCase()) !== -1;
-    });
-
-    this.setState({
-      filteredStreamersPayloads: updatedPayloadsList
-    });
-  };
-
   TwitchApp.prototype.addStreamers = function addStreamers(streamer) {
     this.setState({
       streamers: [].concat(this.state.streamers, [streamer])
@@ -249,6 +255,7 @@ var TwitchApp = function(_React$Component) {
 
   TwitchApp.prototype.componentDidMount = function componentDidMount() {
     this.getFullDataAll(this.state.streamers);
+    //$('ul.tabs').tabs();
     // Modal settings for bringing up edit section
     $('.modal-trigger').leanModal({
       dismissible: true, // Modal can be dismissed by clicking outside of the modal
@@ -337,7 +344,8 @@ var FilterTabs = function FilterTabs(props) {
           },
           React.createElement(
             'a', {
-              className: 'color-Ts active',
+              className: 'color-Ts',
+              id: 'all',
               onClick: function onClick() {
                 return props.onClickStatus(null);
               }
@@ -352,6 +360,7 @@ var FilterTabs = function FilterTabs(props) {
           React.createElement(
             'a', {
               className: 'color-Ts',
+              id: 'online',
               onClick: function onClick() {
                 return props.onClickStatus(true);
               }
@@ -366,6 +375,7 @@ var FilterTabs = function FilterTabs(props) {
           React.createElement(
             'a', {
               className: 'color-Ts',
+              id: 'offline',
               onClick: function onClick() {
                 return props.onClickStatus(false);
               }
@@ -908,7 +918,6 @@ var FooterInfoButtons = function FooterInfoButtons() {
     )
   );
 };
-
 var FooterInfo = function FooterInfo() {
   return React.createElement(
     'div', {
