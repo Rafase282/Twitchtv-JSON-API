@@ -11,7 +11,7 @@ class TwitchApp extends React.Component {
     }
   };
   clearLocalStorage(props) {
-    localStorage.removeItem('Rafase282_TwitchApp');
+   localStorage.removeItem('Rafase282_TwitchApp');
     const streamers = this.getStreamers();
     $('#online').removeClass('active');
     $('#offline').removeClass('active');
@@ -338,7 +338,7 @@ const UserCard = (props) => {
           <strong>Stream Average FPS: </strong>
           {fps}
         </p>
-        <img src={preview} className='responsive-img'/>
+        <img src={preview} className='preview responsive-img'/>
       </div>
       {showLink()}
     </li>

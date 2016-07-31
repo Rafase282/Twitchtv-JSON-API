@@ -255,7 +255,6 @@ var TwitchApp = function(_React$Component) {
 
   TwitchApp.prototype.componentDidMount = function componentDidMount() {
     this.getFullDataAll(this.state.streamers);
-    //$('ul.tabs').tabs();
     // Modal settings for bringing up edit section
     $('.modal-trigger').leanModal({
       dismissible: true, // Modal can be dismissed by clicking outside of the modal
@@ -533,7 +532,7 @@ var UserCard = function UserCard(props) {
       ),
       React.createElement('img', {
         src: preview,
-        className: 'responsive-img'
+        className: 'preview responsive-img'
       })
     ),
     showLink()

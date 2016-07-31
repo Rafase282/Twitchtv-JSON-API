@@ -10,51 +10,69 @@ section {
   -ms-flex-direction: column;
   flex-direction: column;
 }
+
 main {
   -webkit-box-flex: 1;
   -webkit-flex: 1 0 auto;
   -ms-flex: 1 0 auto;
   flex: 1 0 auto;
 }
+
 .devicons {
   font-size: 2.3em;
 }
+
 .tabs, .card-panel {
   border-radius: 5px;
 }
+
 #searchBar {
   width: 95%;
   margin: 0 auto;
   display: block;
 }
+
 .chips {
   border-bottom: none;
 }
+
 #chipsInput {
   font-weight: bold;
   font-size: 2em;
 }
+
 .chip-btn-icon, .chip-btn {
   font-size: 16px;
 }
+
 .chip-btn {
   cursor: pointer;
   float: right;
   padding-left: 8px;
   line-height: 32px;
 }
+
+.preview {
+  margin: 0 auto;
+  display: block;
+}
+
 a.active {
   border-style: solid none solid none;
 }
+
 .collection-item:first-child {
   border-radius: 5px 5px 0 0;
 }
+
 .collection-item:last-child {
   border-radius: 0 0 5px 5px;
 }
+
 .collapsible-header, .collapsible-body {
   border-style: none;
 }
+
 .collapsible-header.active {
   border-style: none none solid none;
 }
@@ -62,41 +80,45 @@ a.active {
 /* Color variables
  * Use these variables with the
  * color classes. */
-
-
 /* Color Scheme
  * Use these classes for giving color */
-
 .color-Bp {
   background-color: #0d47a1 !important;
 }
 .color-Bp:hover, .color-Bp:active {
   background-color: #0d47a1 !important;
 }
+
 .color-Bp-light {
   background-color: #ff1744 !important;
 }
 .color-Bp-light:hover, .color-Bp-light:active {
   background-color: #ff1744 !important;
 }
+
 .color-Bsd {
   background-color: #fff !important;
 }
 .color-Bsd:hover, .color-Bsd:active {
   background-color: #fff !important;
 }
+
 .color-Tp {
   color: #0d47a1 !important;
 }
+
 .color-Ts {
   color: #fff !important;
 }
+
 .color-Ts-dark {
   color: #212121 !important;
 }
+
 .color-Ts-light {
   color: #B6B6B6 !important;
 }
+
 .color-Tp-light {
   color: #ff1744 !important;
 }
