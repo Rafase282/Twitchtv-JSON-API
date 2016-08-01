@@ -119,6 +119,8 @@ class TwitchApp extends React.Component {
         currFilter = null
     };
     const statusFilter = this.getFilteredStreamers(status);
+    // Resets active card when switching tabs.
+    $('.collapsible-header.active').click();
     this.setState({
       filter: currFilter,
       filteredStreamersPayloads: statusFilter
@@ -230,27 +232,27 @@ class TwitchApp extends React.Component {
       'darkness_429',
       'kairi78_officiel',
       'rafase282s',
-      'esl_sc2',
-      'SchviftyFive'
+      'esl_sc2'
     ];
   };
   render() {
-    return (<section className='container-fluid'>
-      <Header/>
-      <main className='page-content container'>
-        <div className='row'>
-          <div className='col s12'>
-            <div className='card-panel color-Bp-light'>
-              <FilterTabs onClickStatus={this.filterStreamerStatus.bind(this)}/>
-              <SearchBar filterStreamers={this.filterStreamers.bind(this)} />
-              <FilteredList filteredStreamersPayloads={this.state.filteredStreamersPayloads} />
+    return (
+      <section>
+        <Header/>
+        <main className='page-content container'>
+          <div className='row'>
+            <div className='col s12'>
+              <div className='card-panel color-Bp-light'>
+                <FilterTabs onClickStatus={this.filterStreamerStatus.bind(this)}/>
+                <SearchBar filterStreamers={this.filterStreamers.bind(this)} />
+                <FilteredList filteredStreamersPayloads={this.state.filteredStreamersPayloads} />
+              </div>
             </div>
           </div>
-        </div>
-        <Menu onClickReset={this.clearLocalStorage.bind(this)}/>
-        <AllChips addChip={this.addStreamers.bind(this)} chips={this.state.allStreamersPayloads} removeChip={this.removeStreamer.bind(this)}/>
-      </main>
-      <Footer/>
+          <Menu onClickReset={this.clearLocalStorage.bind(this)}/>
+          <AllChips addChip={this.addStreamers.bind(this)} chips={this.state.allStreamersPayloads} removeChip={this.removeStreamer.bind(this)}/>
+        </main>
+        <Footer/>
     </section>);
   }
 };
@@ -363,7 +365,7 @@ const AllChips = (props) => {
   const chips = props.chips.map((chip, i) => {
     return <Chip name={chip.user} key={i} logo={chip.logo} removeChip={handleRemovingChip.bind(this)}/>
     });
-  $("#chipsInput").keyup(function (e) {
+  $('#chipsInput').keyup(function (e) {
     if (e.keyCode == 13) {
       // Adds user on enter
       handleAddingChip();
